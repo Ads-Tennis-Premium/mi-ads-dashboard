@@ -420,7 +420,7 @@ function Campaigns() {
         <KpiCard label="Gasto Total" value={fmtCOP(totalSpend)} sub="todas las campañas" change={12.4} />
         <KpiCard label="Impresiones" value={fmtNum(totalImpr)} sub="total período" change={8.9} />
         <KpiCard label="Clics Totales" value={fmtNum(totalClicks)} sub="total período" change={11.2} />
-        <KpiCard label="Campañas Activas" value={CAMPAIGNS.filter(c=>c.status==='ACTIVE').length.toString()} sub="de "+CAMPAIGNS.length+" totales" />
+        <KpiCard label="Campañas Activas" value={CAMPAIGNS.filter(c=>c.status==='ACTIVE').length.toString()} sub={`de ${CAMPAIGNS.length} totales`} />
       </div>
 
       {/* Tabla */}
