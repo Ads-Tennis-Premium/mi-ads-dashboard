@@ -2,1036 +2,977 @@ import React, { useState, useMemo } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, ComposedChart,
 } from 'recharts'
 
-/* ── COLORES ─────────────────────────────────────── */
-const AC   = '#8d60ca'
-const ACL  = '#b899e8'
-const ACD  = 'rgba(141,96,202,0.14)'
-const GR   = '#4ade80'
-const GRD  = 'rgba(74,222,128,0.13)'
-const AM   = '#fbbf24'
-const AMD  = 'rgba(251,191,36,0.13)'
-const RE   = '#f87171'
-const RED  = 'rgba(248,113,113,0.13)'
-const BL   = '#60a5fa'
-const TEA  = '#2dd4bf'
-const PNK  = '#f472b6'
-const BG   = '#0d0d0d'
-const SRF  = '#0f0f0f'
-const CRD  = '#161616'
-const BOR  = 'rgba(255,255,255,0.07)'
-const BOR2 = 'rgba(255,255,255,0.13)'
-const MUT  = '#666'
-const MUT2 = '#999'
+/* ── COLORES (Design System del documento) ──────────────────────────── */
+const AC  = '#C8714A'          // Acento principal (naranja/terracota)
+const ACL = '#e8916a'          // Acento claro
+const ACD = 'rgba(200,113,74,0.12)'  // Acento dim
+const GR  = '#4ADE80'          // Positivo
+const GRD = 'rgba(74,222,128,0.13)'
+const AM  = '#fbbf24'          // Amber / neutral
+const AMD = 'rgba(251,191,36,0.13)'
+const RE  = '#f87171'          // Negativo
+const RED = 'rgba(248,113,113,0.13)'
+const BL  = '#60a5fa'          // Azul
+const BG  = '#0d0d0d'          // Fondo
+const SRF = '#0f0f0f'
+const CRD = '#161616'          // Card
+const BRD = '#282828'          // Border
+const TXT = '#FFFFFF'          // Texto principal
+const SEC = '#8C8C8C'          // Texto secundario
+const NEU = '#94A3B8'          // Neutral
 
-/* ── HELPERS ─────────────────────────────────────── */
-const safeNum = (n, fb=0) => (typeof n==='number' && isFinite(n) ? n : fb)
-const safeF   = (n, d=2)  => safeNum(n).toFixed(d)
-const fmt     = n => new Intl.NumberFormat('es-CO').format(Math.round(safeNum(n)))
-const fmtCOP  = n => '$'+fmt(n)
-const fmtM    = n => {
-  const v = safeNum(n)
-  if (v>=1e6) return '$'+(v/1e6).toFixed(1)+'M'
-  if (v>=1e3) return '$'+(v/1e3).toFixed(0)+'K'
-  return '$'+Math.round(v)
+/* ── TIPOGRAFÍA ──────────────────────────────────────────────────────── */
+const MONO = { fontFamily: "'JetBrains Mono', monospace" }
+const SANS = { fontFamily: "'Inter', sans-serif" }
+
+/* ── DATOS MOCK (Tennispremium) ─────────────────────────────────────── */
+const ACCOUNT = { name: 'Tennispremium', id: 'act_1043322110399302' }
+
+const DAILY_DATA = [
+  { date:'15/3', spend:1820000, roas:4.1, impressions:185000, clicks:5820, ctr:3.15 },
+  { date:'16/3', spend:2100000, roas:4.3, impressions:201000, clicks:6100, ctr:3.03 },
+  { date:'17/3', spend:1950000, roas:3.9, impressions:198000, clicks:5900, ctr:2.98 },
+  { date:'18/3', spend:2300000, roas:4.7, impressions:225000, clicks:7100, ctr:3.16 },
+  { date:'19/3', spend:2150000, roas:4.5, impressions:210000, clicks:6500, ctr:3.10 },
+  { date:'20/3', spend:1800000, roas:3.8, impressions:180000, clicks:5400, ctr:3.00 },
+  { date:'21/3', spend:2400000, roas:5.0, impressions:230000, clicks:7300, ctr:3.17 },
+  { date:'22/3', spend:2250000, roas:4.6, impressions:215000, clicks:6800, ctr:3.16 },
+  { date:'23/3', spend:2050000, roas:4.2, impressions:200000, clicks:6200, ctr:3.10 },
+  { date:'24/3', spend:1900000, roas:3.9, impressions:188000, clicks:5700, ctr:3.03 },
+  { date:'25/3', spend:2600000, roas:5.1, impressions:248000, clicks:7900, ctr:3.19 },
+  { date:'26/3', spend:2450000, roas:4.8, impressions:234000, clicks:7500, ctr:3.21 },
+  { date:'27/3', spend:2100000, roas:4.3, impressions:203000, clicks:6300, ctr:3.10 },
+  { date:'28/3', spend:2300000, roas:4.5, impressions:220000, clicks:7000, ctr:3.18 },
+  { date:'29/3', spend:2200000, roas:4.4, impressions:212000, clicks:6700, ctr:3.16 },
+  { date:'30/3', spend:2800000, roas:5.3, impressions:265000, clicks:8400, ctr:3.17 },
+  { date:'31/3', spend:2650000, roas:5.0, impressions:252000, clicks:8000, ctr:3.17 },
+  { date:'1/4',  spend:2100000, roas:4.1, impressions:200000, clicks:6100, ctr:3.05 },
+  { date:'2/4',  spend:1950000, roas:3.9, impressions:190000, clicks:5800, ctr:3.05 },
+  { date:'3/4',  spend:2200000, roas:4.4, impressions:213000, clicks:6600, ctr:3.10 },
+  { date:'4/4',  spend:2400000, roas:4.7, impressions:228000, clicks:7200, ctr:3.16 },
+  { date:'5/4',  spend:2550000, roas:4.9, impressions:241000, clicks:7700, ctr:3.20 },
+  { date:'6/4',  spend:2350000, roas:4.6, impressions:224000, clicks:7100, ctr:3.17 },
+  { date:'7/4',  spend:2150000, roas:4.3, impressions:207000, clicks:6400, ctr:3.09 },
+  { date:'8/4',  spend:2300000, roas:4.5, impressions:219000, clicks:6900, ctr:3.15 },
+  { date:'9/4',  spend:2700000, roas:5.2, impressions:255000, clicks:8200, ctr:3.22 },
+  { date:'10/4', spend:2500000, roas:4.8, impressions:238000, clicks:7600, ctr:3.19 },
+  { date:'11/4', spend:2100000, roas:4.2, impressions:202000, clicks:6200, ctr:3.07 },
+  { date:'12/4', spend:1980000, roas:4.0, impressions:193000, clicks:5900, ctr:3.06 },
+]
+
+const CAMPAIGNS = [
+  { id:1, name:'Prospecting - Raquetas Premium',   status:'ACTIVE', daily_budget:3200000, spend:18500000, impressions:1820000, clicks:58000, ctr:3.19, cpc:319, roas:5.2 },
+  { id:2, name:'Retargeting - Carrito Abandonado', status:'ACTIVE', daily_budget:1800000, spend:12300000, impressions:980000,  clicks:38500, ctr:3.93, cpc:319, roas:6.8 },
+  { id:3, name:'Lookalike - Compradores',          status:'ACTIVE', daily_budget:2500000, spend:9800000,  impressions:1100000, clicks:32000, ctr:2.91, cpc:306, roas:4.5 },
+  { id:4, name:'Brand Awareness - General',        status:'PAUSED', daily_budget:1200000, spend:7200000,  impressions:1450000, clicks:30000, ctr:2.07, cpc:240, roas:2.1 },
+  { id:5, name:'Conversión - Zapatillas',          status:'ACTIVE', daily_budget:2100000, spend:8900000,  impressions:780000,  clicks:28000, ctr:3.59, cpc:318, roas:4.9 },
+  { id:6, name:'Temporada - Torneos 2026',         status:'ACTIVE', daily_budget:1500000, spend:5200000,  impressions:620000,  clicks:18500, ctr:2.98, cpc:281, roas:3.7 },
+  { id:7, name:'Video Ads - Tutoriales',           status:'ENDED',  daily_budget:800000,  spend:1800000,  impressions:395000,  clicks:8510,  ctr:2.15, cpc:212, roas:1.8 },
+]
+
+const CREATIVES = [
+  { id:1, campaign:'Prospecting - Raquetas Premium',   name:'Raqueta Head Speed Pro - Carrusel',  spend:5200000, impressions:520000, ctr:3.8, roas:6.2, emoji:'🎾' },
+  { id:2, campaign:'Retargeting - Carrito Abandonado', name:'Video Dinámico - Carrito 15s',       spend:4800000, impressions:380000, ctr:4.1, roas:7.3, emoji:'🎥' },
+  { id:3, campaign:'Lookalike - Compradores',          name:'Oferta Flash - 20% OFF',             spend:3200000, impressions:410000, ctr:2.9, roas:4.2, emoji:'🏷️' },
+  { id:4, campaign:'Conversión - Zapatillas',          name:'Nike Air Zoom Vapor - Stories',      spend:2900000, impressions:290000, ctr:3.5, roas:4.8, emoji:'👟' },
+  { id:5, campaign:'Brand Awareness',                  name:'¿Eres tenista? - Video 30s',         spend:2100000, impressions:680000, ctr:1.9, roas:2.0, emoji:'🎬' },
+  { id:6, campaign:'Temporada - Torneos 2026',         name:'Roland Garros 2026 - Colección',     spend:1800000, impressions:225000, ctr:3.1, roas:3.9, emoji:'🏆' },
+  { id:7, campaign:'Prospecting - Raquetas',           name:'Wilson Pro Staff - Imagen Única',    spend:1600000, impressions:198000, ctr:2.7, roas:3.5, emoji:'🎾' },
+  { id:8, campaign:'Video Ads',                        name:'Tutorial Saque - Nivel Avanzado',    spend:890000,  impressions:215000, ctr:1.8, roas:1.5, emoji:'📺' },
+  { id:9, campaign:'Retargeting',                      name:'Testimonio Cliente - Video 20s',     spend:2400000, impressions:195000, ctr:4.5, roas:8.1, emoji:'⭐' },
+]
+
+const AGE_GENDER = [
+  { age:'18-24', male:450000, female:380000 },
+  { age:'25-34', male:890000, female:720000 },
+  { age:'35-44', male:650000, female:510000 },
+  { age:'45-54', male:320000, female:270000 },
+  { age:'55+',   male:180000, female:140000 },
+]
+
+const DEVICES = [
+  { name:'Móvil', value:68 },
+  { name:'Escritorio', value:24 },
+  { name:'Tablet', value:8 },
+]
+
+const GEO = [
+  { country:'Colombia',   spend:38500000, impressions:3820000, clicks:121000, roas:4.8 },
+  { country:'México',     spend:9200000,  impressions:890000,  clicks:28000,  roas:3.9 },
+  { country:'Argentina',  spend:5800000,  impressions:560000,  clicks:17500,  roas:3.5 },
+  { country:'España',     spend:4200000,  impressions:410000,  clicks:13000,  roas:4.1 },
+  { country:'Chile',      spend:2900000,  impressions:285000,  clicks:9000,   roas:3.7 },
+  { country:'Perú',       spend:1800000,  impressions:175000,  clicks:5500,   roas:3.2 },
+  { country:'Ecuador',    spend:890000,   impressions:87000,   clicks:2700,   roas:2.9 },
+  { country:'Venezuela',  spend:650000,   impressions:64000,   clicks:2000,   roas:2.5 },
+  { country:'Uruguay',    spend:520000,   impressions:51000,   clicks:1600,   roas:3.0 },
+  { country:'Paraguay',   spend:340000,   impressions:33000,   clicks:1050,   roas:2.7 },
+]
+
+const PLACEMENTS = [
+  { name:'Facebook Feed',    spend:22000000, impressions:2100000, roas:4.9 },
+  { name:'Instagram Feed',   spend:18500000, impressions:1750000, roas:4.6 },
+  { name:'IG Stories',       spend:9800000,  impressions:1200000, roas:3.8 },
+  { name:'IG Reels',         spend:7200000,  impressions:980000,  roas:4.2 },
+  { name:'Audience Network', spend:3100000,  impressions:520000,  roas:2.8 },
+  { name:'FB Stories',       spend:2800000,  impressions:390000,  roas:3.4 },
+]
+
+const PREV_PERIOD = {
+  spend: 56700000, roas: 4.18, impressions: 5640000, clicks: 177200,
+  ctr: 3.04, cpc: 342, purchases: 810,
 }
 
-/* ── DATOS GLOBALES ──────────────────────────────── */
-const GL = {
-  spend:63679593, impressions:6144998, clicks:193510,
-  ctr:3.149065, cpc:329.08, roas:4.40486,
-  purchases:989, add_to_cart:9584, initiate_checkout:4236,
-  reach:2180000, frequency:2.82, cpm:10360,
-  revenue:280375887, cpr:64387, conv_rate:0.511,
+/* ── UTILIDADES ─────────────────────────────────────────────────────── */
+const fmtCOP = (n) => {
+  if (n >= 1000000000) return '$' + (n/1000000000).toFixed(1) + 'B'
+  if (n >= 1000000)    return '$' + (n/1000000).toFixed(1) + 'M'
+  if (n >= 1000)       return '$' + (n/1000).toFixed(0) + 'K'
+  return '$' + n
 }
-const PREV = { spend:55373559, roas:4.04, ctr:2.86 }
+const fmtNum = (n) => {
+  if (n >= 1000000) return (n/1000000).toFixed(2) + 'M'
+  if (n >= 1000)    return (n/1000).toFixed(1) + 'K'
+  return n.toLocaleString('es-CO')
+}
+const fmtPct = (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '%'
+const TT_STYLE = { background:'#1e1e1e', border:'1px solid #282828', borderRadius:8, fontSize:12, color:'#fff' }
 
-/* ── DATOS DIARIOS (deltas fijos, no random) ─────── */
-const DAILY = (()=>{
-  const D=[
-    [0.88,0.92],[1.12,1.05],[0.95,0.98],[1.08,1.10],[0.75,0.82],
-    [1.20,1.15],[1.05,1.08],[0.92,0.90],[1.15,1.12],[0.85,0.88],
-    [1.18,1.20],[0.78,0.80],[1.10,1.08],[0.96,0.94],[1.22,1.18],
-    [0.88,0.85],[1.05,1.02],[1.14,1.16],[0.82,0.84],[1.08,1.06],
-    [0.90,0.92],[1.25,1.22],[0.72,0.75],[1.16,1.14],[1.02,1.00],
-    [0.88,0.90],[1.10,1.08],[0.94,0.96],[1.18,1.15],[0.86,0.88],
-  ]
-  const s=new Date('2026-03-16')
-  return D.map(([r,r2],i)=>{
-    const d=new Date(s); d.setDate(d.getDate()+i)
-    const spend=Math.round(2122653*r)
-    const imp=Math.round(204833*r2)
-    const clk=Math.round(6450*r2)
-    return {
-      date:`${d.getDate()}/${d.getMonth()+1}`,
-      spend, impressions:imp, clicks:clk,
-      ctr:parseFloat((clk/imp*100).toFixed(2)),
-      cpc:Math.round(spend/clk),
-      cpm:Math.round(spend/imp*1000),
+/* ── ESTILOS BASE ────────────────────────────────────────────────────── */
+const S = {
+  page: {
+    minHeight:'100vh', background:BG, display:'flex',
+    fontFamily:"'Inter', -apple-system, sans-serif", color:TXT,
+  },
+  sidebar: {
+    width:220, minWidth:220, background:CRD,
+    borderRight:'1px solid '+BRD, display:'flex',
+    flexDirection:'column', padding:'20px 0',
+    position:'fixed', top:0, left:0, height:'100vh', zIndex:10,
+  },
+  sidebarLogo: {
+    display:'flex', alignItems:'center', gap:10,
+    padding:'0 20px 20px', borderBottom:'1px solid '+BRD, marginBottom:12,
+  },
+  logoDot: { width:10, height:10, background:AC, borderRadius:'50%' },
+  logoText: { fontSize:16, fontWeight:700 },
+  navItem: (active) => ({
+    display:'flex', alignItems:'center', gap:10,
+    padding:'10px 20px', cursor:'pointer', fontSize:14,
+    color: active ? AC : SEC, transition:'all 0.15s',
+    borderLeft: active ? '3px solid '+AC : '3px solid transparent',
+    background: active ? ACD : 'transparent',
+  }),
+  navIcon: { width:18, fontSize:14, textAlign:'center' },
+  sidebarFooter: {
+    marginTop:'auto', padding:'16px 20px',
+    borderTop:'1px solid '+BRD, fontSize:11, color:SEC, ...MONO,
+  },
+  main: { marginLeft:220, display:'flex', flexDirection:'column', minHeight:'100vh', flex:1 },
+  header: {
+    height:56, background:CRD, borderBottom:'1px solid '+BRD,
+    display:'flex', alignItems:'center', justifyContent:'space-between',
+    padding:'0 28px', position:'sticky', top:0, zIndex:9,
+  },
+  headerTitle: { fontSize:16, fontWeight:600 },
+  accountPill: {
+    background:ACD, color:AC, border:'1px solid rgba(200,113,74,0.3)',
+    borderRadius:6, padding:'5px 12px', fontSize:13, fontWeight:500,
+  },
+  datePill: {
+    background:BG, border:'1px solid '+BRD, borderRadius:6,
+    padding:'5px 12px', fontSize:13, cursor:'pointer',
+    display:'flex', alignItems:'center', gap:6,
+  },
+  content: { padding:28, flex:1 },
+  pageTitle: { fontSize:22, fontWeight:700, marginBottom:24 },
+  card: { background:CRD, border:'1px solid '+BRD, borderRadius:10, padding:20 },
+  cardLabel: { fontSize:11, fontWeight:600, letterSpacing:'0.08em', color:SEC, textTransform:'uppercase', marginBottom:8 },
+  cardValue: { fontSize:28, fontWeight:700, lineHeight:1, marginBottom:6, ...MONO },
+  cardSub: { fontSize:12, color:SEC },
+  chartCard: { background:CRD, border:'1px solid '+BRD, borderRadius:10, padding:20 },
+  chartTitle: { fontSize:12, fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', color:SEC, marginBottom:16 },
+  badge: (type) => {
+    const map = {
+      ACTIVE: { bg:'rgba(74,222,128,0.12)', color:GR, border:'1px solid rgba(74,222,128,0.25)' },
+      PAUSED: { bg:'rgba(148,163,184,0.12)', color:NEU, border:'1px solid rgba(148,163,184,0.25)' },
+      ENDED:  { bg:'rgba(248,113,113,0.12)', color:RE, border:'1px solid rgba(248,113,113,0.25)' },
+      TOP:    { bg:'rgba(74,222,128,0.12)', color:GR, border:'1px solid rgba(74,222,128,0.25)' },
+      AVG:    { bg:'rgba(251,191,36,0.12)', color:AM, border:'1px solid rgba(251,191,36,0.25)' },
+      LOW:    { bg:'rgba(248,113,113,0.12)', color:RE, border:'1px solid rgba(248,113,113,0.25)' },
     }
-  })
-})()
-
-/* ── SEMANALES PRE-CALCULADOS ────────────────────── */
-const WEEKLY = (()=>{
-  const w=[],[],[],[]
-  const wks=[w[0]=[],w[1]=[],w[2]=[],w[3]=[]]
-  DAILY.forEach((d,i)=>wks[Math.min(Math.floor(i/7),3)].push(d))
-  return wks.map((wk,i)=>{
-    const n=wk.length||1
+    const m = map[type] || map.PAUSED
     return {
-      week:`Sem ${i+1}`,
-      spend: Math.round(wk.reduce((s,d)=>s+d.spend,0)),
-      clicks:Math.round(wk.reduce((s,d)=>s+d.clicks,0)),
-      impressions:Math.round(wk.reduce((s,d)=>s+d.impressions,0)),
-      cpc:  Math.round(wk.reduce((s,d)=>s+d.cpc,0)/n),
-      ctr:  parseFloat((wk.reduce((s,d)=>s+d.ctr,0)/n).toFixed(2)),
-      cpm:  Math.round(wk.reduce((s,d)=>s+d.cpm,0)/n),
+      display:'inline-flex', alignItems:'center', gap:4,
+      padding:'3px 8px', borderRadius:4, fontSize:11, fontWeight:600,
+      background:m.bg, color:m.color, border:m.border,
     }
-  })
-})()
+  },
+}
 
-/* ── CAMPAÑAS ────────────────────────────────────── */
-const CAMPAIGNS=[
-  {id:1,name:'Interacción - Perfil IG - Aumento Seguidores',status:'ACTIVE', budget:200, spend:665000,    impressions:73316,   reach:52000,  clicks:4690,  ctr:6.39,cpc:142,cpm:9070,  frequency:1.41,purchases:8,  cpr:83125,roas:1.20},
-  {id:2,name:'Prospección - Calzado Nike / Adidas',          status:'ACTIVE', budget:800, spend:29100000, impressions:2800000, reach:980000, clicks:92000, ctr:3.28,cpc:316,cpm:10393,frequency:2.86,purchases:421,cpr:69121,roas:4.22},
-  {id:3,name:'Remarketing - Carrito Abandonado',             status:'ACTIVE', budget:500, spend:18200000, impressions:1240000, reach:310000, clicks:38000, ctr:3.06,cpc:479,cpm:14677,frequency:4.00,purchases:398,cpr:45729,roas:6.18},
-  {id:4,name:'Retención - Clientes Frecuentes',              status:'PAUSED', budget:400, spend:16000000, impressions:1500000, reach:420000, clicks:54000, ctr:3.60,cpc:296,cpm:10667,frequency:3.57,purchases:162,cpr:98765,roas:3.48},
-]
-
-/* ── ANUNCIOS ────────────────────────────────────── */
-const ADS=[
-  {id:1,name:'Presentación / Imagen / Nike V2K Combinan Con Todo',type:'imagen',  spend:88000, impressions:8551, clicks:213,ctr:2.49,cpm:10290,emoji:'👟'},
-  {id:2,name:'Presentación / Video / TT - VO041 - Unboxing',      type:'video',   spend:273000,impressions:26532,clicks:842,ctr:3.17,cpm:10290,emoji:'🎬'},
-  {id:3,name:'Catálogo / Carrusel / New Balance 574 Serie',        type:'carrusel',spend:145000,impressions:13980,clicks:418,ctr:2.99,cpm:10372,emoji:'🛍️'},
-  {id:4,name:'Story / Video / Puma x Vans Flash Sale',             type:'video',   spend:159000,impressions:21000,clicks:630,ctr:3.00,cpm:7571, emoji:'⚡'},
-]
-
-/* ── AUDIENCIAS ──────────────────────────────────── */
-const AGE_DATA=[
-  {age:'18-24',spend:11800000,clicks:39450,conv:142,ctr:3.57},
-  {age:'25-34',spend:21900000,clicks:67820,conv:378,ctr:3.07},
-  {age:'35-44',spend:15200000,clicks:42260,conv:274,ctr:2.86},
-  {age:'45-54',spend:9400000, clicks:26430,conv:138,ctr:3.59},
-  {age:'55+',  spend:5200000, clicks:11820,conv:57, ctr:3.21},
-]
-const GENDER_DATA=[
-  {name:'Masculino',value:58,spend:36934163,clicks:112236,ctr:3.24},
-  {name:'Femenino', value:42,spend:26745430,clicks:81274, ctr:3.04},
-]
-const CITY_DATA=[
-  {city:'Bogotá',      spend:19103877,clicks:58053,conv:297},
-  {city:'Medellín',    spend:12735918,clicks:38702,conv:198},
-  {city:'Cali',        spend:10188734,clicks:30961,conv:158},
-  {city:'Barranquilla',spend:6367959, clicks:19351,conv:99},
-  {city:'Cartagena',   spend:3820775, clicks:11610,conv:59},
-]
-
-/* ── PLACEMENTS ──────────────────────────────────── */
-const PLACE=[
-  {name:'Facebook Feed',    spend:19103877,impressions:1843499,clicks:60987,ctr:3.31,cpm:10363,roas:4.10},
-  {name:'Instagram Feed',   spend:15919898,impressions:1536249,clicks:53183,ctr:3.46,cpm:10363,roas:4.82},
-  {name:'Instagram Reels',  spend:12735918,impressions:1228999,clicks:42572,ctr:3.46,cpm:10363,roas:4.61},
-  {name:'Instagram Stories',spend:9551938, impressions:921749, clicks:22019,ctr:2.39,cpm:10363,roas:3.55},
-  {name:'Facebook Stories', spend:6367959, impressions:614499, clicks:14749,ctr:2.40,cpm:10363,roas:3.20},
-]
-
-/* ── HEATMAP ─────────────────────────────────────── */
-const HDAYS =['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
-const HHOURS=['6h','8h','10h','12h','14h','16h','18h','20h','22h']
-const HBASE=[
-  [2.1,2.3,3.1,3.4,3.2,2.8,2.2,2.5,1.8],
-  [2.0,2.4,3.3,3.5,3.4,3.0,2.6,2.7,1.9],
-  [2.2,2.5,3.5,3.8,3.6,3.1,2.8,3.0,2.0],
-  [2.1,2.3,3.2,3.6,3.5,3.2,3.0,3.1,2.1],
-  [2.3,2.6,3.4,3.9,3.7,3.4,3.2,3.3,2.3],
-  [1.8,2.0,2.5,3.0,3.8,4.1,4.2,3.8,2.5],
-  [1.6,1.9,2.3,2.8,3.5,3.9,4.0,3.5,2.2],
-]
-
-/* ── EMBUDO ──────────────────────────────────────── */
-const FUNNEL=[
-  {label:'Impresiones',value:6144998,pct:100},
-  {label:'Clics',      value:193510, pct:3.15},
-  {label:'Add to Cart',value:9584,   pct:0.156},
-  {label:'Checkout',   value:4236,   pct:0.069},
-  {label:'Compras',    value:989,    pct:0.016},
-]
-
-/* ── BENCHMARKS ──────────────────────────────────── */
-const BM={ctr:2.5,cpc:500,roas:3.0,cpm:12000,freq:3.5,cpr:80000}
-
-/* ── TOOLTIP RECHARTS ────────────────────────────── */
-function ChartTip({active,payload,label,formatter}){
-  if(!active||!payload?.length) return null
+/* ── COMPONENTES REUTILIZABLES ──────────────────────────────────────── */
+function KpiCard({ label, value, sub, change }) {
+  const isPos = change >= 0
   return (
-    <div style={{background:'#1a1a1a',border:`1px solid ${BOR2}`,borderRadius:6,padding:'8px 12px',fontSize:11,color:'#ccc',maxWidth:200}}>
-      <p style={{color:MUT2,marginBottom:4}}>{label??''}</p>
-      {payload.map((p,i)=>(
-        <p key={i} style={{color:p?.color??AC,marginBottom:2}}>
-          {p?.name}: {formatter?formatter(p?.value):safeF(p?.value??0)}
-        </p>
-      ))}
+    <div style={S.card}>
+      <div style={S.cardLabel}>{label}</div>
+      <div style={S.cardValue}>{value}</div>
+      {sub && <div style={S.cardSub}>{sub}</div>}
+      {change !== undefined && (
+        <div style={{ fontSize:12, display:'flex', alignItems:'center', gap:4, marginTop:4, color: isPos ? GR : RE }}>
+          {isPos ? '↑' : '↓'} {Math.abs(change).toFixed(1)}% vs período anterior
+        </div>
+      )}
     </div>
   )
 }
 
-/* ── SECCIÓN: VISTA GENERAL ──────────────────────── */
-function OverviewSection(){
-  const [tip,setTip]=useState(null)
+function SectionHeader({ title, sub }) {
+  return (
+    <div style={{ marginBottom:24 }}>
+      <div style={S.pageTitle}>{title}</div>
+      {sub && <div style={{ color:SEC, fontSize:13, marginTop:-16, marginBottom:8 }}>{sub}</div>}
+    </div>
+  )
+}
 
-  const KPIS1=[
-    {k:'invest',  label:'Inversión Total',  value:'$63.7M',           sub:'COP · 30 días',       subC:MUT2, tip:'Total gastado en Meta Ads en el período seleccionado.'},
-    {k:'roas',    label:'ROAS',             value:'4.40x',             sub:'↑ vs período anterior',subC:GR,  tip:'Ingresos por cada peso invertido. Meta saludable: > 3.0x.',trend:'+'+((GL.roas-PREV.roas)/PREV.roas*100).toFixed(1)+'%'},
-    {k:'purch',   label:'Compras',          value:fmt(GL.purchases),   sub:'↑ omni_purchase',      subC:GR,  tip:'Compras atribuidas (ventana 7 días clic + 1 día vista).'},
-    {k:'ctr',     label:'CTR Promedio',     value:'3.15%',             sub:'↑ sobre benchmark',    subC:GR,  tip:'% que hacen clic. Benchmark e-commerce: 1.5–3%.', trend:'+'+((GL.ctr-PREV.ctr)/PREV.ctr*100).toFixed(1)+'%'},
-  ]
-  const KPIS2=[
-    {k:'reach',   label:'Alcance (Reach)',   value:'2.18M',            sub:'personas únicas',     tip:'Personas únicas que vieron tus anuncios al menos una vez.'},
-    {k:'freq',    label:'Frecuencia',        value:safeF(GL.frequency),sub:'impresiones/persona', tip:'> 4 puede generar fatiga publicitaria. Ideal: 2–4.'},
-    {k:'cpm',     label:'CPM',              value:fmtM(GL.cpm),        sub:'COP por mil impr.',   tip:'Costo por 1,000 impresiones. Refleja competencia en subastas.'},
-    {k:'cpc',     label:'CPC Promedio',      value:'$329',             sub:'COP por clic',        tip:'Costo promedio por clic = Spend / Clics.'},
-    {k:'cpr',     label:'Costo por Compra', value:fmtM(GL.cpr),        sub:'COP / compra',        tip:'Cuánto cuesta generar una compra = Spend / Compras.'},
-    {k:'rev',     label:'Revenue Estimado', value:fmtM(GL.revenue),    sub:'COP (ROAS × Spend)',  tip:'Ingresos estimados = Spend × ROAS.',subC:GR},
-    {k:'conv',    label:'Tasa Conversión',  value:'0.51%',             sub:'clics → compras',     tip:'% de clics que resultan en compra = Compras / Clics × 100.'},
-    {k:'atc',     label:'Add to Cart',      value:fmt(GL.add_to_cart), sub:'↑ alto engagement',   tip:'Añadieron al carrito. Alta intención de compra.',subC:GR},
-  ]
+function StatusBadge({ status }) {
+  const labels = { ACTIVE:'● Activa', PAUSED:'⏸ Pausada', ENDED:'✕ Finalizada' }
+  return <span style={S.badge(status)}>{labels[status] || status}</span>
+}
 
-  const FCOL=['rgba(141,96,202,1)','rgba(141,96,202,.75)','rgba(141,96,202,.55)','rgba(141,96,202,.38)','rgba(74,222,128,.85)']
-  const PCOL=[AC,BL,GR]
-  const evts=[
-    {name:'Add to Cart',value:GL.add_to_cart},
-    {name:'Checkout',   value:GL.initiate_checkout},
-    {name:'Compras',    value:GL.purchases},
-  ]
+function PerfBadge({ roas }) {
+  const type = roas > 5 ? 'TOP' : roas >= 2 ? 'AVG' : 'LOW'
+  const labels = { TOP:'🏆 Top', AVG:'↗ Promedio', LOW:'↘ Bajo' }
+  return <span style={S.badge(type)}>{labels[type]}</span>
+}
+
+function RoasBar({ roas }) {
+  const color = roas > 4 ? GR : roas >= 2 ? AM : RE
+  const pct = Math.min((roas / 8) * 100, 100)
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <div style={{ flex:1, height:5, background:BRD, borderRadius:3 }}>
+        <div style={{ width:pct+'%', height:'100%', background:color, borderRadius:3 }} />
+      </div>
+      <span style={{ ...MONO, fontSize:13, color, minWidth:35 }}>{roas}x</span>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA A — VISTA GENERAL
+══════════════════════════════════════════════════════════════════════ */
+function Overview({ onNavigate }) {
+  const totalSpend = DAILY_DATA.reduce((s,d)=>s+d.spend,0)
+  const avgROAS = 4.40
+  const totalRevenue = totalSpend * avgROAS
+  const totalImpressions = DAILY_DATA.reduce((s,d)=>s+d.impressions,0)
+  const totalClicks = DAILY_DATA.reduce((s,d)=>s+d.clicks,0)
+  const top5 = [...CAMPAIGNS].sort((a,b)=>b.spend-a.spend).slice(0,5)
+
+  const chgSpend    = ((totalSpend - PREV_PERIOD.spend) / PREV_PERIOD.spend) * 100
+  const chgROAS     = ((avgROAS - PREV_PERIOD.roas) / PREV_PERIOD.roas) * 100
+  const chgImpr     = ((totalImpressions - PREV_PERIOD.impressions) / PREV_PERIOD.impressions) * 100
+  const chgRevenue  = ((totalRevenue - PREV_PERIOD.spend*PREV_PERIOD.roas) / (PREV_PERIOD.spend*PREV_PERIOD.roas)) * 100
 
   return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:10}}>
-        {KPIS1.map(k=>(
-          <div key={k.k} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:14,position:'relative'}} onMouseLeave={()=>setTip(null)}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-              <span style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.5px'}}>{k.label}</span>
-              <span onMouseEnter={()=>setTip(k.k)} style={{width:14,height:14,borderRadius:'50%',border:`1px solid ${BOR2}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:MUT,cursor:'default',flexShrink:0}}>i</span>
-            </div>
-            <div style={{fontSize:21,fontWeight:500,color:'#e8e8e8'}}>
-              {k.trend&&<span style={{fontSize:11,color:GR,marginRight:4}}>{k.trend}</span>}
-              {k.value}
-            </div>
-            <div style={{fontSize:11,marginTop:3,color:k.subC??MUT2}}>{k.sub}</div>
-            {tip===k.k&&<div style={{position:'absolute',top:0,right:22,zIndex:99,background:'#222',border:`1px solid ${BOR2}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:'#bbb',width:180,lineHeight:1.5,pointerEvents:'none'}}>{k.tip}</div>}
-          </div>
-        ))}
+    <div style={S.content}>
+      <SectionHeader title="Vista General" />
+
+      {/* KPI row 1 */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
+        <KpiCard label="Inversión Total"      value={fmtCOP(totalSpend)}   sub="COP · 30 días"           change={chgSpend} />
+        <KpiCard label="Ingresos Estimados"   value={fmtCOP(totalRevenue)} sub={`ROAS ${avgROAS}x × Gasto`} change={chgRevenue} />
+        <KpiCard label="ROAS Combinado"       value={`${avgROAS}x`}         sub="omni_purchase"          change={chgROAS} />
+        <KpiCard label="Impresiones Totales"  value={fmtNum(totalImpressions)} sub="últimos 30 días"     change={chgImpr} />
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
-        {KPIS2.map(k=>(
-          <div key={k.k} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:14,position:'relative'}} onMouseLeave={()=>setTip(null)}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-              <span style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.5px'}}>{k.label}</span>
-              <span onMouseEnter={()=>setTip(k.k)} style={{width:14,height:14,borderRadius:'50%',border:`1px solid ${BOR2}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:MUT,cursor:'default',flexShrink:0}}>i</span>
-            </div>
-            <div style={{fontSize:19,fontWeight:500,color:'#e8e8e8'}}>{k.value}</div>
-            <div style={{fontSize:11,marginTop:3,color:k.subC??MUT2}}>{k.sub}</div>
-            {tip===k.k&&<div style={{position:'absolute',top:0,right:22,zIndex:99,background:'#222',border:`1px solid ${BOR2}`,borderRadius:6,padding:'8px 10px',fontSize:11,color:'#bbb',width:180,lineHeight:1.5,pointerEvents:'none'}}>{k.tip}</div>}
-          </div>
-        ))}
+      {/* KPI row 2 */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+        <KpiCard label="Compras"      value="989"           sub="conversiones"  change={22.1} />
+        <KpiCard label="CTR Promedio" value="3.15%"         sub="sobre benchmark" change={3.7} />
+        <KpiCard label="CPC Promedio" value="$329"          sub="COP por clic"  change={-3.8} />
+        <KpiCard label="Add to Cart"  value="9.584"         sub="alto engagement" change={15.6} />
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:10,marginBottom:10}}>
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Gasto diario — 30 días (COP)</div>
-          <ResponsiveContainer width="100%" height={190}>
-            <ComposedChart data={DAILY}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-              <XAxis dataKey="date" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} interval={4}/>
-              <YAxis yAxisId="l" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM} width={52}/>
-              <YAxis yAxisId="r" orientation="right" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>v+'%'} width={30}/>
-              <Tooltip content={<ChartTip/>}/>
-              <Bar yAxisId="l" dataKey="spend" name="Spend" fill={AC} fillOpacity={0.8} radius={[2,2,0,0]} barSize={7}/>
-              <Line yAxisId="r" type="monotone" dataKey="ctr" name="CTR" stroke={AM} strokeWidth={1.5} dot={false}/>
-            </ComposedChart>
+      {/* Gráfico combinado Gasto + ROAS doble eje Y */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>Gasto Diario (COP) &amp; ROAS — Últimos 30 días · Doble eje Y</div>
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={DAILY_DATA}>
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
+            <YAxis yAxisId="left" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>`${(v/1000000).toFixed(1)}M`} />
+            <YAxis yAxisId="right" orientation="right" domain={[0,8]} tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>`${v}x`} />
+            <Tooltip contentStyle={TT_STYLE} formatter={(v,n)=>n==='spend'?[fmtCOP(v),'Gasto']:[v+'x','ROAS']} />
+            <Legend wrapperStyle={{ fontSize:12 }} />
+            <Bar yAxisId="left" dataKey="spend" name="Gasto COP" fill={AC} fillOpacity={0.75} />
+            <Line yAxisId="right" type="monotone" dataKey="roas" name="ROAS" stroke={GR} strokeWidth={2.5} dot={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Gráfico CTR + Embudo */}
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:24 }}>
+        <div style={S.chartCard}>
+          <div style={S.chartTitle}>CTR Diario (%)</div>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={DAILY_DATA}>
+              <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+              <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
+              <YAxis tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>v+'%'} domain={[0,5]} />
+              <Tooltip contentStyle={TT_STYLE} formatter={v=>[v+'%','CTR']} />
+              <Line type="monotone" dataKey="ctr" name="CTR %" stroke={AC} strokeWidth={2} dot={false} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
-
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Embudo de conversión</div>
-          {FUNNEL.map((f,i)=>(
-            <div key={f.label} style={{marginBottom:10}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:3,fontSize:11}}>
-                <span style={{color:MUT2}}>{f.label}</span>
-                <span style={{fontWeight:500}}>{fmt(f.value)}</span>
+        <div style={S.chartCard}>
+          <div style={S.chartTitle}>Embudo de Conversión</div>
+          {[
+            { label:'Impresiones', value:6144998, color:AC },
+            { label:'Clics',       value:193510,  color:BL },
+            { label:'Add to Cart', value:9584,    color:'#A78BFA' },
+            { label:'Checkout',    value:4236,    color:AM },
+            { label:'Compras',     value:989,     color:GR },
+          ].map(item => (
+            <div key={item.label} style={{ marginBottom:12 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:5 }}>
+                <span>{item.label}</span>
+                <span style={MONO}>{item.value.toLocaleString('es-CO')}</span>
               </div>
-              <div style={{background:'rgba(255,255,255,.06)',borderRadius:3,height:5}}>
-                <div style={{width:`${Math.max(f.pct,1.5)}%`,height:5,borderRadius:3,background:FCOL[i]}}/>
+              <div style={{ height:4, background:BRD, borderRadius:2 }}>
+                <div style={{ width:Math.max((item.value/6144998)*100,1)+'%', height:'100%', background:item.color, borderRadius:2 }} />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>CTR diario (%)</div>
-          <ResponsiveContainer width="100%" height={150}>
-            <AreaChart data={DAILY}>
-              <defs>
-                <linearGradient id="gctr" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={ACL} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={ACL} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-              <XAxis dataKey="date" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} interval={5}/>
-              <YAxis tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>v+'%'} width={32}/>
-              <Tooltip content={<ChartTip formatter={v=>safeF(v)+'%'}/>}/>
-              <Area type="monotone" dataKey="ctr" name="CTR" stroke={ACL} fill="url(#gctr)" strokeWidth={2} dot={false}/>
-            </AreaChart>
-          </ResponsiveContainer>
+      {/* Top 5 Campañas */}
+      <div style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, overflow:'hidden' }}>
+        <div style={{ padding:'16px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid '+BRD }}>
+          <span style={{ fontSize:13, fontWeight:600 }}>Top 5 Campañas por Gasto</span>
+          <span style={{ fontSize:12, color:AC, cursor:'pointer' }} onClick={()=>onNavigate('campaigns')}>Ver todas →</span>
         </div>
-
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Distribución de eventos</div>
-          <div style={{display:'flex',alignItems:'center',gap:16}}>
-            <ResponsiveContainer width={120} height={130}>
-              <PieChart>
-                <Pie data={evts} dataKey="value" innerRadius={35} outerRadius={56} paddingAngle={3}>
-                  {evts.map((_,i)=><Cell key={i} fill={PCOL[i]}/>)}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{flex:1}}>
-              {evts.map((e,i)=>(
-                <div key={e.name} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,fontSize:12}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:PCOL[i],flexShrink:0}}/>
-                  <span style={{color:MUT2,flex:1}}>{e.name}</span>
-                  <span style={{fontWeight:500}}>{fmt(e.value)}</span>
-                </div>
+        <table style={{ width:'100%', borderCollapse:'collapse' }}>
+          <thead>
+            <tr>
+              {['Campaña','Estado','Gasto','Impresiones','Clics','CTR','ROAS'].map(h=>(
+                <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:11, fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', color:SEC, borderBottom:'1px solid '+BRD }}>{h}</th>
               ))}
-            </div>
-          </div>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {top5.map((c,i) => (
+              <tr key={c.id} style={{ borderBottom: i<4 ? '1px solid rgba(40,40,40,0.5)' : 'none' }}>
+                <td style={{ padding:'12px 16px', fontSize:13 }}>{c.name}</td>
+                <td style={{ padding:'12px 16px' }}><StatusBadge status={c.status} /></td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtCOP(c.spend)}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtNum(c.impressions)}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{c.clicks.toLocaleString('es-CO')}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{c.ctr}%</td>
+                <td style={{ padding:'12px 16px' }}><RoasBar roas={c.roas} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-/* ── SECCIÓN: CAMPAÑAS ───────────────────────────── */
-function CampaignsSection(){
-  const [sortCol,setSortCol]=useState('spend')
-  const [sortDir,setSortDir]=useState(-1)
-  const [filter,setFilter]=useState('ALL')
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA B — CAMPAÑAS
+══════════════════════════════════════════════════════════════════════ */
+function Campaigns() {
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState('spend')
+  const [sortDir, setSortDir] = useState('desc')
 
-  const sorted=useMemo(()=>{
-    const list=(CAMPAIGNS??[]).filter(c=>filter==='ALL'||c.status===filter)
-    return [...list].sort((a,b)=>{
-      const av=typeof a[sortCol]==='string'?a[sortCol]:safeNum(a[sortCol])
-      const bv=typeof b[sortCol]==='string'?b[sortCol]:safeNum(b[sortCol])
-      return typeof av==='string'?av.localeCompare(bv)*sortDir:(av-bv)*sortDir
-    })
-  },[sortCol,sortDir,filter])
+  const filtered = useMemo(() => {
+    let data = CAMPAIGNS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    data = [...data].sort((a,b) => sortDir==='desc' ? b[sortKey]-a[sortKey] : a[sortKey]-b[sortKey])
+    return data
+  }, [search, sortKey, sortDir])
 
-  const tgl=col=>col===sortCol?setSortDir(d=>d*-1):(setSortCol(col),setSortDir(-1))
-  const arr=col=>sortCol===col?(sortDir===-1?' ↓':' ↑'):' ↕'
-
-  const th=(col,right)=>({
-    padding:'7px 10px',fontSize:10,textAlign:right?'right':'left',
-    color:sortCol===col?AC:MUT,borderBottom:`1px solid ${BOR}`,
-    fontWeight:400,textTransform:'uppercase',letterSpacing:'.4px',
-    cursor:'pointer',whiteSpace:'nowrap',
-  })
-  const td=(right)=>({
-    padding:'8px 10px',borderBottom:'1px solid rgba(255,255,255,.04)',
-    color:'#ccc',fontSize:11,whiteSpace:'nowrap',textAlign:right?'right':'left',
-  })
-  const mc=(val,good,bad,lower)=>{
-    if(lower) return val<=good?GR:val>=bad?RE:'#ccc'
-    return val>=good?GR:val<=bad?RE:'#ccc'
+  const handleSort = (key) => {
+    if (sortKey === key) setSortDir(d => d==='desc' ? 'asc' : 'desc')
+    else { setSortKey(key); setSortDir('desc') }
   }
 
-  const activeCnt=CAMPAIGNS.filter(c=>c.status==='ACTIVE').length
-  const budgetSum=CAMPAIGNS.filter(c=>c.status==='ACTIVE').reduce((s,c)=>s+c.budget,0)
+  const SortIcon = ({ k }) => sortKey===k ? (sortDir==='desc' ? ' ↓' : ' ↑') : ' ↕'
+
+  const totalSpend = CAMPAIGNS.reduce((s,c)=>s+c.spend,0)
+  const totalImpr  = CAMPAIGNS.reduce((s,c)=>s+c.impressions,0)
+  const totalClicks= CAMPAIGNS.reduce((s,c)=>s+c.clicks,0)
 
   return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
-        {[
-          {label:'Campañas Activas',  value:String(activeCnt),  sub:`de ${CAMPAIGNS.length} totales`,subC:GR},
-          {label:'CTR más alto',      value:'6.39%',            sub:'Perfil IG',subC:GR},
-          {label:'Mejor ROAS',        value:'6.18x',            sub:'Remarketing',subC:GR},
-          {label:'Presup. activo/día',value:fmtCOP(budgetSum),  sub:'COP combinado',subC:MUT2},
-        ].map(k=>(
-          <div key={k.label} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:14}}>
-            <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>{k.label}</div>
-            <div style={{fontSize:21,fontWeight:500,color:'#e8e8e8'}}>{k.value}</div>
-            <div style={{fontSize:11,marginTop:3,color:k.subC}}>{k.sub}</div>
-          </div>
-        ))}
+    <div style={S.content}>
+      <SectionHeader title="Campañas" />
+
+      {/* KPI summary */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+        <KpiCard label="Gasto Total" value={fmtCOP(totalSpend)} sub="todas las campañas" change={12.4} />
+        <KpiCard label="Impresiones" value={fmtNum(totalImpr)} sub="total período" change={8.9} />
+        <KpiCard label="Clics Totales" value={fmtNum(totalClicks)} sub="total período" change={11.2} />
+        <KpiCard label="Campañas Activas" value={CAMPAIGNS.filter(c=>c.status==='ACTIVE').length.toString()} sub="de "+CAMPAIGNS.length+" totales" />
       </div>
 
-      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
-        {['ALL','ACTIVE','PAUSED'].map(f=>(
-          <button key={f} onClick={()=>setFilter(f)} style={{
-            padding:'4px 12px',borderRadius:4,fontSize:11,cursor:'pointer',
-            background:filter===f?AC:'transparent',
-            color:filter===f?'#fff':MUT2,
-            border:`1px solid ${filter===f?AC:BOR2}`,
-            transition:'all .1s',
-          }}>
-            {f==='ALL'?'Todas':f}
-          </button>
-        ))}
-        <span style={{marginLeft:'auto',fontSize:11,color:MUT}}>
-          {sorted.length} campaña{sorted.length!==1?'s':''}
-        </span>
-      </div>
-
-      <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,overflow:'hidden'}}>
-        <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%',borderCollapse:'collapse',minWidth:980}}>
+      {/* Tabla */}
+      <div style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, overflow:'hidden' }}>
+        <div style={{ padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid '+BRD }}>
+          <span style={{ fontSize:13, fontWeight:600 }}>Todas las Campañas</span>
+          <input
+            type="text"
+            placeholder="Buscar campaña..."
+            value={search}
+            onChange={e=>setSearch(e.target.value)}
+            style={{
+              background:BG, border:'1px solid '+BRD, borderRadius:6,
+              padding:'6px 12px', color:TXT, fontSize:13, outline:'none', width:220,
+            }}
+          />
+        </div>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse' }}>
             <thead>
               <tr>
                 {[
-                  ['name','Campaña',false],['status','Estado',false],
-                  ['spend','Spend',true],['impressions','Impr.',true],
-                  ['clicks','Clics',true],['ctr','CTR',true],
-                  ['cpc','CPC',true],['cpm','CPM',true],
-                  ['frequency','Freq.',true],['purchases','Compras',true],
-                  ['cpr','CPR',true],['roas','ROAS',true],
-                ].map(([col,lbl,r])=>(
-                  <th key={col} style={th(col,r)} onClick={()=>tgl(col)}>{lbl}{arr(col)}</th>
+                  ['name','Campaña'],['status','Estado'],['spend','Gasto'],
+                  ['impressions','Impresiones'],['clicks','Clics'],
+                  ['ctr','CTR'],['cpc','CPC'],['roas','ROAS'],
+                ].map(([k,h])=>(
+                  <th key={k} onClick={()=>handleSort(k)}
+                    style={{ padding:'10px 16px', textAlign:'left', fontSize:11, fontWeight:600,
+                      letterSpacing:'0.06em', textTransform:'uppercase', color:SEC,
+                      borderBottom:'1px solid '+BRD, cursor:'pointer', whiteSpace:'nowrap',
+                    }}>
+                    {h}<SortIcon k={k} />
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {sorted.map((c,idx)=>(
-                <tr key={c.id??idx}
-                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.025)'}}
-                  onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
-                  <td style={{...td(false),maxWidth:200,overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</td>
-                  <td style={td(false)}>
-                    <span style={{display:'inline-block',padding:'2px 7px',borderRadius:3,fontSize:10,fontWeight:600,
-                      background:c.status==='ACTIVE'?GRD:AMD,color:c.status==='ACTIVE'?GR:AM}}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td style={{...td(true),color:AC,fontWeight:600}}>{fmtCOP(c.spend)}</td>
-                  <td style={td(true)}>{fmt(c.impressions)}</td>
-                  <td style={td(true)}>{fmt(c.clicks)}</td>
-                  <td style={{...td(true),color:mc(c.ctr,BM.ctr,BM.ctr*.7,false),fontWeight:600}}>{safeF(c.ctr)}%</td>
-                  <td style={{...td(true),color:mc(c.cpc,BM.cpc,BM.cpc*1.2,true),fontWeight:600}}>${fmt(c.cpc)}</td>
-                  <td style={{...td(true),color:mc(c.cpm,BM.cpm,BM.cpm*1.2,true),fontWeight:600}}>${fmt(c.cpm)}</td>
-                  <td style={{...td(true),color:mc(c.frequency,BM.freq,BM.freq,true),fontWeight:600}}>{safeF(c.frequency)}</td>
-                  <td style={td(true)}>{fmt(c.purchases)}</td>
-                  <td style={{...td(true),color:mc(c.cpr,BM.cpr,BM.cpr*1.3,true),fontWeight:600}}>{fmtM(c.cpr)}</td>
-                  <td style={{...td(true),color:mc(c.roas,BM.roas,BM.roas*.7,false),fontWeight:600}}>{safeF(c.roas)}x</td>
+              {filtered.map((c,i) => (
+                <tr key={c.id} style={{ borderBottom: i<filtered.length-1 ? '1px solid rgba(40,40,40,0.5)' : 'none' }}>
+                  <td style={{ padding:'12px 16px', fontSize:13, maxWidth:220 }}>{c.name}</td>
+                  <td style={{ padding:'12px 16px' }}><StatusBadge status={c.status} /></td>
+                  <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtCOP(c.spend)}</td>
+                  <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtNum(c.impressions)}</td>
+                  <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{c.clicks.toLocaleString('es-CO')}</td>
+                  <td style={{ padding:'12px 16px', ...MONO, fontSize:13, color: c.ctr>3 ? GR : c.ctr>2 ? AM : RE }}>{c.ctr}%</td>
+                  <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtCOP(c.cpc)}</td>
+                  <td style={{ padding:'12px 16px', minWidth:120 }}><RoasBar roas={c.roas} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div style={{padding:'9px 12px',borderTop:`1px solid ${BOR}`,display:'flex',gap:16,fontSize:10,color:MUT}}>
-          <span><span style={{color:GR,fontWeight:600}}>Verde</span> = sobre benchmark</span>
-          <span><span style={{color:RE,fontWeight:600}}>Rojo</span> = bajo benchmark</span>
-          <span>CTR &gt;{BM.ctr}% · CPC &lt;${fmt(BM.cpc)} · ROAS &gt;{BM.roas}x · Freq &lt;{BM.freq}</span>
-        </div>
       </div>
     </div>
   )
 }
 
-/* ── SECCIÓN: ANALÍTICA ──────────────────────────── */
-function AnalyticsSection(){
-  const compareData=WEEKLY.map((w,i)=>({
-    ...w,
-    spendPrev: Math.round(w.spend*(0.82+i*0.04)),
-    roasCurr:  parseFloat((3.8+i*0.2).toFixed(2)),
-    roasPrev:  parseFloat((3.3+i*0.18).toFixed(2)),
-  }))
-
-  const heatColor=v=>{
-    const t=Math.min(Math.max((v-1.6)/(4.2-1.6),0),1)
-    const r=Math.round(141+(74-141)*t)
-    const g=Math.round(96+(222-96)*t)
-    const b=Math.round(202+(128-202)*t)
-    return `rgba(${r},${g},${b},0.85)`
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA C — ANALÍTICA
+══════════════════════════════════════════════════════════════════════ */
+function Analytics() {
+  const CURR = {
+    spend: DAILY_DATA.reduce((s,d)=>s+d.spend,0),
+    impressions: DAILY_DATA.reduce((s,d)=>s+d.impressions,0),
+    clicks: DAILY_DATA.reduce((s,d)=>s+d.clicks,0),
+    ctr: 3.15, cpc: 329, roas: 4.40,
   }
 
-  const cs={background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}
-  const ts={fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}
+  const compareRows = [
+    { metric:'Gasto Total',   curr:fmtCOP(CURR.spend),       prev:fmtCOP(PREV_PERIOD.spend),       chg:((CURR.spend-PREV_PERIOD.spend)/PREV_PERIOD.spend)*100 },
+    { metric:'Impresiones',   curr:fmtNum(CURR.impressions),  prev:fmtNum(PREV_PERIOD.impressions),  chg:((CURR.impressions-PREV_PERIOD.impressions)/PREV_PERIOD.impressions)*100 },
+    { metric:'Clics',         curr:fmtNum(CURR.clicks),       prev:fmtNum(PREV_PERIOD.clicks),       chg:((CURR.clicks-PREV_PERIOD.clicks)/PREV_PERIOD.clicks)*100 },
+    { metric:'CTR',           curr:CURR.ctr+'%',              prev:PREV_PERIOD.ctr+'%',              chg:((CURR.ctr-PREV_PERIOD.ctr)/PREV_PERIOD.ctr)*100 },
+    { metric:'CPC',           curr:fmtCOP(CURR.cpc),          prev:fmtCOP(PREV_PERIOD.cpc),          chg:((CURR.cpc-PREV_PERIOD.cpc)/PREV_PERIOD.cpc)*100 },
+    { metric:'ROAS',          curr:CURR.roas+'x',             prev:PREV_PERIOD.roas+'x',             chg:((CURR.roas-PREV_PERIOD.roas)/PREV_PERIOD.roas)*100 },
+  ]
+
+  const roasByCampaign = CAMPAIGNS.map(c => ({
+    name: c.name.split(' - ')[0],
+    roas: c.roas,
+    fill: c.roas > 4 ? GR : c.roas >= 2 ? AM : RE,
+  }))
 
   return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-        <div style={cs}>
-          <div style={ts}>Spend vs Clics por semana</div>
-          <ResponsiveContainer width="100%" height={210}>
-            <ComposedChart data={WEEKLY} margin={{top:5,right:10,bottom:5,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" vertical={false}/>
-              <XAxis dataKey="week" tick={{fill:MUT,fontSize:11}} tickLine={false} axisLine={false}/>
-              <YAxis yAxisId="l" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM} width={55}/>
-              <YAxis yAxisId="r" orientation="right" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>fmt(v)} width={52}/>
-              <Tooltip content={<ChartTip/>}/>
-              <Legend wrapperStyle={{fontSize:10,color:MUT2,paddingTop:8}}/>
-              <Bar yAxisId="l" dataKey="spend" name="Spend (COP)" fill={AC} fillOpacity={0.8} radius={[4,4,0,0]} barSize={32}/>
-              <Line yAxisId="r" type="monotone" dataKey="clicks" name="Clics" stroke={BL} strokeWidth={2.5} dot={{fill:BL,r:5}} strokeDasharray="5 3"/>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+    <div style={S.content}>
+      <SectionHeader title="Analítica de Rendimiento" />
 
-        <div style={cs}>
-          <div style={ts}>CPC promedio por semana (COP)</div>
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart data={WEEKLY} barSize={36} margin={{top:5,right:10,bottom:5,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" vertical={false}/>
-              <XAxis dataKey="week" tick={{fill:MUT,fontSize:11}} tickLine={false} axisLine={false}/>
-              <YAxis tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>'$'+v} width={50}/>
-              <Tooltip content={<ChartTip formatter={v=>'$'+fmt(v)+' COP'}/>}/>
-              <Bar dataKey="cpc" name="CPC" radius={[5,5,0,0]}>
-                {WEEKLY.map((_,i)=><Cell key={i} fill={AC} fillOpacity={0.5+i*0.12}/>)}
-              </Bar>
+      {/* Gráfico 1: Gasto vs ROAS doble eje */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>Gasto Diario vs ROAS — Doble Eje Y</div>
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={DAILY_DATA}>
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
+            <YAxis yAxisId="left" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>`${(v/1000000).toFixed(1)}M`} label={{ value:'Gasto USD', angle:-90, position:'insideLeft', fill:SEC, fontSize:11 }} />
+            <YAxis yAxisId="right" orientation="right" domain={[0,8]} tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>v+'x'} label={{ value:'ROAS', angle:90, position:'insideRight', fill:SEC, fontSize:11 }} />
+            <Tooltip contentStyle={TT_STYLE} />
+            <Legend wrapperStyle={{ fontSize:12 }} />
+            <Bar yAxisId="left" dataKey="spend" name="Gasto" fill={AC} fillOpacity={0.7} />
+            <Line yAxisId="right" type="monotone" dataKey="roas" name="ROAS" stroke={GR} strokeWidth={2} dot={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Gráfico 2: ROAS por campaña */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>ROAS por Campaña — Codificado por Color</div>
+        <div style={{ marginBottom:12, display:'flex', gap:16, fontSize:12, color:SEC }}>
+          <span style={{ color:GR }}>■ ROAS &gt; 4x (Excelente)</span>
+          <span style={{ color:AM }}>■ ROAS 2–4x (Promedio)</span>
+          <span style={{ color:RE }}>■ ROAS &lt; 2x (Bajo)</span>
+        </div>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={roasByCampaign} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis type="number" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>v+'x'} />
+            <YAxis type="category" dataKey="name" tick={{ fill:SEC, fontSize:11 }} width={140} />
+            <Tooltip contentStyle={TT_STYLE} formatter={v=>[v+'x','ROAS']} />
+            <Bar dataKey="roas" radius={[0,4,4,0]}>
+              {roasByCampaign.map((entry, i) => (
+                <Cell key={i} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Gráfico 3: Impresiones y Clics en el tiempo */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>Impresiones &amp; Clics a lo Largo del Tiempo</div>
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={DAILY_DATA}>
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
+            <YAxis yAxisId="impr" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtNum(v)} />
+            <YAxis yAxisId="clks" orientation="right" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtNum(v)} />
+            <Tooltip contentStyle={TT_STYLE} />
+            <Legend wrapperStyle={{ fontSize:12 }} />
+            <Line yAxisId="impr" type="monotone" dataKey="impressions" name="Impresiones" stroke={AC} strokeWidth={2} dot={false} />
+            <Line yAxisId="clks" type="monotone" dataKey="clicks" name="Clics" stroke={BL} strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Tabla comparativa */}
+      <div style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, overflow:'hidden' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid '+BRD }}>
+          <span style={{ fontSize:13, fontWeight:600 }}>Período Actual vs Anterior</span>
+        </div>
+        <table style={{ width:'100%', borderCollapse:'collapse' }}>
+          <thead>
+            <tr>
+              {['Métrica','Período Actual','Período Anterior','Cambio'].map(h=>(
+                <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:11, fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', color:SEC, borderBottom:'1px solid '+BRD }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {compareRows.map((row,i)=>(
+              <tr key={row.metric} style={{ borderBottom: i<compareRows.length-1 ? '1px solid rgba(40,40,40,0.5)':'none' }}>
+                <td style={{ padding:'12px 16px', fontSize:13, fontWeight:500 }}>{row.metric}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{row.curr}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13, color:SEC }}>{row.prev}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13, fontWeight:600, color: row.chg >= 0 ? GR : RE }}>
+                  {row.chg >= 0 ? '↑' : '↓'} {Math.abs(row.chg).toFixed(1)}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA D — CREATIVIDADES
+══════════════════════════════════════════════════════════════════════ */
+function Creatives() {
+  const [perfFilter, setPerfFilter] = useState('all')
+  const [campFilter, setCampFilter] = useState('all')
+
+  const campaigns = ['all', ...new Set(CREATIVES.map(c=>c.campaign))]
+
+  const filtered = useMemo(() => {
+    return CREATIVES.filter(c => {
+      const perfOk = perfFilter === 'all'
+        || (perfFilter === 'top' && c.roas > 5)
+        || (perfFilter === 'avg' && c.roas >= 2 && c.roas <= 5)
+        || (perfFilter === 'low' && c.roas < 2)
+      const campOk = campFilter === 'all' || c.campaign === campFilter
+      return perfOk && campOk
+    })
+  }, [perfFilter, campFilter])
+
+  const perfBtns = [
+    { k:'all', label:'Todos' },
+    { k:'top', label:'🏆 Top (>5x)' },
+    { k:'avg', label:'↗ Promedio (2–5x)' },
+    { k:'low', label:'↘ Bajo (<2x)' },
+  ]
+
+  return (
+    <div style={S.content}>
+      <SectionHeader title="Biblioteca Creativa" />
+
+      {/* Filtros */}
+      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
+        <select
+          value={campFilter}
+          onChange={e=>setCampFilter(e.target.value)}
+          style={{ background:CRD, border:'1px solid '+BRD, borderRadius:6, padding:'6px 12px', color:TXT, fontSize:12, outline:'none', cursor:'pointer' }}
+        >
+          {campaigns.map(c=><option key={c} value={c}>{c==='all'?'Todas las campañas':c}</option>)}
+        </select>
+        {perfBtns.map(b=>(
+          <button key={b.k} onClick={()=>setPerfFilter(b.k)} style={{
+            padding:'6px 14px', borderRadius:6, fontSize:12, fontWeight:500, cursor:'pointer',
+            border: perfFilter===b.k ? '1px solid '+AC : '1px solid '+BRD,
+            background: perfFilter===b.k ? ACD : CRD,
+            color: perfFilter===b.k ? AC : SEC,
+          }}>{b.label}</button>
+        ))}
+      </div>
+
+      {/* Grid de creatividades */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+        {filtered.map(c => {
+          const level = c.roas > 5 ? 'TOP' : c.roas >= 2 ? 'AVG' : 'LOW'
+          return (
+            <div key={c.id} style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, overflow:'hidden' }}>
+              {/* Miniatura */}
+              <div style={{ position:'relative', aspectRatio:'16/9', background:BRD, display:'flex', alignItems:'center', justifyContent:'center', fontSize:48 }}>
+                {c.emoji}
+                <div style={{ position:'absolute', top:8, right:8 }}>
+                  <PerfBadge roas={c.roas} />
+                </div>
+              </div>
+              {/* Info */}
+              <div style={{ padding:14 }}>
+                <div style={{ fontSize:13, fontWeight:500, marginBottom:12, lineHeight:1.4, color:TXT }}>{c.name}</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                  {[
+                    { label:'GASTO', value:fmtCOP(c.spend) },
+                    { label:'IMPRESIONES', value:fmtNum(c.impressions) },
+                    { label:'CTR', value:c.ctr+'%' },
+                    { label:'ROAS', value:c.roas+'x' },
+                  ].map(m=>(
+                    <div key={m.label}>
+                      <div style={{ fontSize:10, color:SEC, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.label}</div>
+                      <div style={{ fontSize:15, fontWeight:600, ...MONO, color: m.label==='ROAS' ? (c.roas>4?GR:c.roas>=2?AM:RE) : TXT }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA E — AUDIENCIAS
+══════════════════════════════════════════════════════════════════════ */
+function Audiences() {
+  const DEVICE_COLORS_LIST = [AC, BL, '#A78BFA']
+  const ROAS_COLOR = (r) => r > 4 ? GR : r >= 3 ? AM : RE
+
+  return (
+    <div style={S.content}>
+      <SectionHeader title="Información de Audiencia" />
+
+      {/* Gráfico 1: Edad y Género (barras agrupadas) + Dispositivos (dona) */}
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:24 }}>
+        <div style={S.chartCard}>
+          <div style={S.chartTitle}>Distribución por Edad y Género (Impresiones)</div>
+          <div style={{ marginBottom:12, display:'flex', gap:16, fontSize:12 }}>
+            <span style={{ color:AC }}>■ Masculino</span>
+            <span style={{ color:BL }}>■ Femenino</span>
+          </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={AGE_GENDER}>
+              <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+              <XAxis dataKey="age" tick={{ fill:SEC, fontSize:11 }} />
+              <YAxis tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtNum(v)} />
+              <Tooltip contentStyle={TT_STYLE} formatter={(v,n)=>[fmtNum(v), n==='male'?'Masculino':'Femenino']} />
+              <Bar dataKey="male" name="Masculino" fill={AC} fillOpacity={0.85} />
+              <Bar dataKey="female" name="Femenino" fill={BL} fillOpacity={0.85} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-        <div style={cs}>
-          <div style={ts}>Impresiones diarias</div>
-          <ResponsiveContainer width="100%" height={155}>
-            <AreaChart data={DAILY} margin={{top:5,right:10,bottom:5,left:0}}>
-              <defs>
-                <linearGradient id="gimp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={GR} stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor={GR} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-              <XAxis dataKey="date" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} interval={4}/>
-              <YAxis tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>(safeNum(v)/1000).toFixed(0)+'K'} width={38}/>
-              <Tooltip content={<ChartTip formatter={fmt}/>}/>
-              <Area type="monotone" dataKey="impressions" name="Impresiones" stroke={GR} fill="url(#gimp)" strokeWidth={2} dot={false}/>
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div style={cs}>
-          <div style={ts}>CTR diario (%)</div>
-          <ResponsiveContainer width="100%" height={155}>
-            <LineChart data={DAILY} margin={{top:5,right:10,bottom:5,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-              <XAxis dataKey="date" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} interval={4}/>
-              <YAxis tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>v+'%'} domain={['auto','auto']} width={34}/>
-              <Tooltip content={<ChartTip formatter={v=>safeF(v)+'%'}/>}/>
-              <Line type="monotone" dataKey="ctr" name="CTR" stroke={AM} strokeWidth={2} dot={false}/>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div style={{...cs,marginBottom:10}}>
-        <div style={ts}>Spend y ROAS — actual vs período anterior</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:12,marginBottom:10}}>
-          {[
-            {label:'Spend actual',  color:AC},
-            {label:'Spend anterior',color:'rgba(141,96,202,.35)'},
-            {label:'ROAS actual',   color:GR},
-            {label:'ROAS anterior', color:AM},
-          ].map(l=>(
-            <div key={l.label} style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:MUT2}}>
-              <div style={{width:9,height:9,borderRadius:2,background:l.color}}/>
-              {l.label}
-            </div>
-          ))}
-          <div style={{marginLeft:'auto',fontSize:11,color:GR}}>
-            Spend ↑ {((GL.spend-PREV.spend)/PREV.spend*100).toFixed(1)}% vs período anterior
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={190}>
-          <ComposedChart data={compareData} margin={{top:5,right:10,bottom:5,left:0}}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-            <XAxis dataKey="week" tick={{fill:MUT,fontSize:11}} tickLine={false} axisLine={false}/>
-            <YAxis yAxisId="l" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM} width={55}/>
-            <YAxis yAxisId="r" orientation="right" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>v+'x'} width={34}/>
-            <Tooltip content={<ChartTip/>}/>
-            <Bar yAxisId="l" dataKey="spend"     name="Spend actual"   fill={AC}                    fillOpacity={0.85} radius={[4,4,0,0]} barSize={18}/>
-            <Bar yAxisId="l" dataKey="spendPrev" name="Spend anterior" fill="rgba(141,96,202,.35)" radius={[4,4,0,0]} barSize={18}/>
-            <Line yAxisId="r" type="monotone" dataKey="roasCurr" name="ROAS actual"   stroke={GR} strokeWidth={2} dot={{fill:GR,r:4}}/>
-            <Line yAxisId="r" type="monotone" dataKey="roasPrev" name="ROAS anterior" stroke={AM} strokeWidth={2} dot={{fill:AM,r:4}} strokeDasharray="4 3"/>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div style={cs}>
-        <div style={ts}>Heatmap CTR — hora del día × día de la semana</div>
-        <div style={{fontSize:10,color:MUT,marginBottom:12}}>Púrpura = CTR bajo · Verde = CTR alto</div>
-        <div style={{overflowX:'auto'}}>
-          <div style={{display:'grid',gridTemplateColumns:`56px repeat(${HHOURS.length},1fr)`,gap:3,minWidth:480}}>
-            <div/>
-            {HHOURS.map(h=>(
-              <div key={h} style={{textAlign:'center',fontSize:10,color:MUT,paddingBottom:4}}>{h}</div>
-            ))}
-            {HDAYS.map((day,di)=>(
-              <React.Fragment key={day}>
-                <div style={{fontSize:11,color:MUT2,lineHeight:'28px'}}>{day}</div>
-                {HHOURS.map((hr,hi)=>{
-                  const v=HBASE[di][hi]
-                  return (
-                    <div key={hr} title={`${day} ${hr}: CTR ${v.toFixed(2)}%`}
-                      style={{height:28,borderRadius:4,background:heatColor(v),display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'rgba(255,255,255,.75)',cursor:'default'}}>
-                      {v.toFixed(1)}
-                    </div>
-                  )
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ── SECCIÓN: AUDIENCIAS ─────────────────────────── */
-function AudiencesSection(){
-  const cs={background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}
-  const ts={fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}
-  const GC=[AC,BL]
-
-  return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
-        {[
-          {label:'Alcance total', value:'2.18M',  sub:'personas únicas'},
-          {label:'Frecuencia',    value:'2.82',   sub:'veces / persona'},
-          {label:'Segmento top',  value:'25-34',  sub:'mayor volumen',subC:GR},
-          {label:'Ciudad top',    value:'Bogotá', sub:'30% del spend'},
-        ].map(k=>(
-          <div key={k.label} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:14}}>
-            <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>{k.label}</div>
-            <div style={{fontSize:20,fontWeight:500,color:'#e8e8e8'}}>{k.value}</div>
-            <div style={{fontSize:11,marginTop:3,color:k.subC??MUT2}}>{k.sub}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:10,marginBottom:10}}>
-        <div style={cs}>
-          <div style={ts}>Rendimiento por grupo de edad</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={AGE_DATA} margin={{top:5,right:10,bottom:5,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" vertical={false}/>
-              <XAxis dataKey="age" tick={{fill:MUT,fontSize:11}} tickLine={false} axisLine={false}/>
-              <YAxis yAxisId="l" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM} width={55}/>
-              <YAxis yAxisId="r" orientation="right" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={v=>v+'%'} width={32}/>
-              <Tooltip content={<ChartTip/>}/>
-              <Legend wrapperStyle={{fontSize:10,color:MUT2,paddingTop:8}}/>
-              <Bar yAxisId="l" dataKey="spend" name="Spend" fill={AC} fillOpacity={0.8} radius={[4,4,0,0]} barSize={22}/>
-              <Bar yAxisId="l" dataKey="conv"  name="Compras" fill={GR} fillOpacity={0.7} radius={[4,4,0,0]} barSize={22}/>
-              <Line yAxisId="r" type="monotone" dataKey="ctr" name="CTR %" stroke={AM} strokeWidth={2.5} dot={{fill:AM,r:4}}/>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div style={cs}>
-          <div style={ts}>Distribución por género</div>
-          <ResponsiveContainer width="100%" height={140}>
+        <div style={S.chartCard}>
+          <div style={S.chartTitle}>Desglose por Dispositivo</div>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={GENDER_DATA} dataKey="value" nameKey="name" innerRadius={42} outerRadius={62} paddingAngle={4} startAngle={90} endAngle={450}>
-                {GENDER_DATA.map((_,i)=><Cell key={i} fill={GC[i]}/>)}
+              <Pie data={DEVICES} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
+                {DEVICES.map((_, i) => <Cell key={i} fill={DEVICE_COLORS_LIST[i]} />)}
               </Pie>
-              <Tooltip formatter={v=>v+'%'} contentStyle={{background:'#1a1a1a',border:`1px solid ${BOR2}`,fontSize:11}}/>
+              <Tooltip contentStyle={TT_STYLE} formatter={(v,n)=>[v+'%',n]} />
             </PieChart>
           </ResponsiveContainer>
-          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
-            {GENDER_DATA.map((g,i)=>(
-              <div key={g.name} style={{display:'flex',alignItems:'center',gap:8,fontSize:12}}>
-                <div style={{width:7,height:7,borderRadius:1,background:GC[i]}}/>
-                <span style={{color:MUT2,flex:1}}>{g.name}</span>
-                <span style={{fontWeight:600}}>{g.value}%</span>
-                <span style={{color:MUT,fontSize:10}}>{fmtM(g.spend)}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{marginTop:14}}>
-            <div style={{fontSize:10,color:MUT,textTransform:'uppercase',letterSpacing:'.4px',marginBottom:8}}>CTR por género</div>
-            {GENDER_DATA.map((g,i)=>(
-              <div key={g.name} style={{marginBottom:8}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:3}}>
-                  <span style={{color:MUT2}}>{g.name}</span>
-                  <span style={{color:g.ctr>=BM.ctr?GR:'#ccc'}}>{g.ctr.toFixed(2)}%</span>
-                </div>
-                <div style={{background:'rgba(255,255,255,.06)',borderRadius:3,height:4}}>
-                  <div style={{width:`${(g.ctr/5)*100}%`,height:4,borderRadius:3,background:GC[i]}}/>
-                </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:8 }}>
+            {DEVICES.map((d,i) => (
+              <div key={d.name} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
+                <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ width:10, height:10, borderRadius:2, background:DEVICE_COLORS_LIST[i], display:'inline-block' }} />
+                  {d.name}
+                </span>
+                <span style={{ ...MONO, fontWeight:600 }}>{d.value}%</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={cs}>
-        <div style={ts}>Top 5 ciudades — spend, clics y conversiones</div>
-        <ResponsiveContainer width="100%" height={210}>
-          <ComposedChart data={CITY_DATA} layout="vertical" margin={{top:5,right:50,bottom:5,left:10}}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" horizontal={false}/>
-            <XAxis type="number" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM}/>
-            <YAxis dataKey="city" type="category" tick={{fill:MUT2,fontSize:11}} tickLine={false} axisLine={false} width={90}/>
-            <Tooltip content={<ChartTip/>}/>
-            <Legend wrapperStyle={{fontSize:10,color:MUT2}}/>
-            <Bar dataKey="spend"  name="Spend" fill={AC} fillOpacity={0.8} radius={[0,4,4,0]} barSize={12}/>
-            <Bar dataKey="clicks" name="Clics" fill={BL} fillOpacity={0.6} radius={[0,4,4,0]} barSize={12}/>
-            <Line type="monotone" dataKey="conv" name="Compras" stroke={GR} strokeWidth={2} dot={{fill:GR,r:5}}/>
-          </ComposedChart>
+      {/* Gráfico 3: Rendimiento por Placement */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>Rendimiento por Ubicación / Placement</div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={PLACEMENTS} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis type="number" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtCOP(v)} />
+            <YAxis type="category" dataKey="name" tick={{ fill:SEC, fontSize:11 }} width={140} />
+            <Tooltip contentStyle={TT_STYLE} formatter={(v,n)=>n==='spend'?[fmtCOP(v),'Gasto']:[v+'x','ROAS']} />
+            <Legend wrapperStyle={{ fontSize:12 }} />
+            <Bar dataKey="spend" name="Gasto" fill={AC} fillOpacity={0.75} radius={[0,4,4,0]} />
+          </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Tabla Top 10 países */}
+      <div style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, overflow:'hidden' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid '+BRD }}>
+          <span style={{ fontSize:13, fontWeight:600 }}>Top 10 Ubicaciones Geográficas (por Gasto)</span>
+        </div>
+        <table style={{ width:'100%', borderCollapse:'collapse' }}>
+          <thead>
+            <tr>
+              {['#','País','Gasto','Impresiones','Clics','ROAS'].map(h=>(
+                <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:11, fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase', color:SEC, borderBottom:'1px solid '+BRD }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {GEO.map((g,i) => (
+              <tr key={g.country} style={{ borderBottom: i<GEO.length-1 ? '1px solid rgba(40,40,40,0.5)':'none' }}>
+                <td style={{ padding:'12px 16px', fontSize:13, color:SEC }}>{i+1}</td>
+                <td style={{ padding:'12px 16px', fontSize:13, fontWeight:500 }}>{g.country}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtCOP(g.spend)}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{fmtNum(g.impressions)}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13 }}>{g.clicks.toLocaleString('es-CO')}</td>
+                <td style={{ padding:'12px 16px', ...MONO, fontSize:13, color:ROAS_COLOR(g.roas) }}>{g.roas}x</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-/* ── SECCIÓN: PLACEMENTS ─────────────────────────── */
-function PlacementsSection(){
-  const totalSpend=PLACE.reduce((s,p)=>s+p.spend,0)
-  const PLC=[AC,BL,TEA,AM,PNK]
-  const cs={background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}
-  const ts={fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}
+/* ══════════════════════════════════════════════════════════════════════
+   PÁGINA F — PRESUPUESTO
+══════════════════════════════════════════════════════════════════════ */
+function Budget() {
+  // Calcular ritmo: días transcurridos del mes = 16 de 30 = 53%
+  const daysElapsed = 16
+  const daysTotal = 30
+  const timePct = (daysElapsed / daysTotal) * 100
+
+  const budgetData = CAMPAIGNS.map(c => {
+    const totalBudget = c.daily_budget * daysTotal
+    const spentPct = (c.spend / totalBudget) * 100
+    const remaining = totalBudget - c.spend
+    const dailyAvg = c.spend / daysElapsed
+    const projected = dailyAvg * daysTotal
+    // Ritmo: si spentPct > timePct+10 → rápido, si < timePct-10 → lento, sino → bien
+    const pace = spentPct > timePct + 10 ? 'fast' : spentPct < timePct - 10 ? 'slow' : 'on'
+    return { ...c, totalBudget, spentPct, remaining, dailyAvg, projected, pace, timePct }
+  })
+
+  const activeBudgets = budgetData.filter(c=>c.status==='ACTIVE')
+
+  // Datos para el gráfico de barras diarias con línea de presupuesto promedio
+  const avgDailyBudget = activeBudgets.reduce((s,c)=>s+c.daily_budget,0)
+  const chartData = DAILY_DATA.map(d => ({ ...d, budget: avgDailyBudget }))
+
+  const totalProjected = budgetData.reduce((s,c)=>s+c.projected,0)
+  const totalBudget    = budgetData.reduce((s,c)=>s+c.totalBudget,0)
+  const totalSpent     = budgetData.reduce((s,c)=>s+c.spend,0)
+  const totalRemaining = totalBudget - totalSpent
+
+  const paceColors = { on: GR, fast: '#FB923C', slow: BL }
+  const paceLabels = { on: '✓ En ritmo', fast: '⚡ Rápido', slow: '🐢 Lento' }
 
   return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
-        {[
-          {label:'Mejor ROAS',      value:'4.82x', sub:'Instagram Feed',     subC:GR},
-          {label:'Mayor CTR',       value:'3.46%', sub:'IG Feed + IG Reels', subC:GR},
-          {label:'Mayor inversión', value:'FB Feed',sub:'30% del spend total',subC:MUT2},
-        ].map(k=>(
-          <div key={k.label} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:14}}>
-            <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>{k.label}</div>
-            <div style={{fontSize:21,fontWeight:500,color:'#e8e8e8'}}>{k.value}</div>
-            <div style={{fontSize:11,marginTop:4,color:k.subC}}>{k.sub}</div>
-          </div>
-        ))}
+    <div style={S.content}>
+      <SectionHeader title="Seguimiento de Presupuesto" />
+
+      {/* KPI summary */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+        <KpiCard label="Presupuesto Total" value={fmtCOP(totalBudget)} sub="todas las campañas" />
+        <KpiCard label="Gastado" value={fmtCOP(totalSpent)} sub={`${((totalSpent/totalBudget)*100).toFixed(0)}% del total`} change={12.4} />
+        <KpiCard label="Restante" value={fmtCOP(totalRemaining)} sub="presupuesto disponible" />
+        <KpiCard label="Proyectado Fin de Mes" value={fmtCOP(totalProjected)} sub="basado en ritmo actual" />
       </div>
 
-      <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,overflow:'hidden',marginBottom:12}}>
-        <div style={{padding:'12px 14px',borderBottom:`1px solid ${BOR}`}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px'}}>Rendimiento por placement</div>
-        </div>
-        <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%',borderCollapse:'collapse',minWidth:640}}>
-            <thead>
-              <tr>
-                {['Placement','Spend','% Total','Impr.','Clics','CTR','CPM','ROAS'].map((h,i)=>(
-                  <th key={h} style={{padding:'8px 12px',fontSize:10,color:MUT,borderBottom:`1px solid ${BOR}`,fontWeight:400,textTransform:'uppercase',letterSpacing:'.4px',textAlign:i>0?'right':'left',whiteSpace:'nowrap'}}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {PLACE.map((p,i)=>{
-                const pct=(p.spend/totalSpend*100).toFixed(1)
-                return (
-                  <tr key={i}
-                    onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,.025)'}}
-                    onMouseLeave={e=>{e.currentTarget.style.background='transparent'}}>
-                    <td style={{padding:'9px 12px',borderBottom:'1px solid rgba(255,255,255,.04)',fontSize:12,color:'#ccc',fontWeight:500}}>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:7}}>
-                        <span style={{width:7,height:7,borderRadius:1,background:PLC[i],flexShrink:0,display:'inline-block'}}/>
-                        {p.name}
-                      </span>
-                    </td>
-                    {[
-                      {v:fmtCOP(p.spend),c:AC},
-                      {v:pct+'%',c:'#aaa'},
-                      {v:fmt(p.impressions),c:'#aaa'},
-                      {v:fmt(p.clicks),c:'#aaa'},
-                      {v:safeF(p.ctr)+'%',c:p.ctr>=BM.ctr?GR:RE},
-                      {v:fmtM(p.cpm),c:p.cpm<=BM.cpm?GR:RE},
-                      {v:p.roas.toFixed(2)+'x',c:p.roas>=BM.roas?GR:RE},
-                    ].map((cell,j)=>(
-                      <td key={j} style={{padding:'9px 12px',borderBottom:'1px solid rgba(255,255,255,.04)',fontSize:12,color:cell.c,textAlign:'right',fontWeight:cell.c!=='#aaa'?600:400}}>
-                        {cell.v}
-                      </td>
-                    ))}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+      {/* Gráfico de gasto diario + línea presupuesto */}
+      <div style={{ ...S.chartCard, marginBottom:24 }}>
+        <div style={S.chartTitle}>Gasto Diario vs Presupuesto Promedio Diario</div>
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
+            <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
+            <YAxis tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtCOP(v)} />
+            <Tooltip contentStyle={TT_STYLE} formatter={(v,n)=>[fmtCOP(v),n]} />
+            <Legend wrapperStyle={{ fontSize:12 }} />
+            <Bar dataKey="spend" name="Gasto Diario" fill={AC} fillOpacity={0.75} />
+            <Line type="monotone" dataKey="budget" name="Presupuesto Promedio" stroke={AM} strokeWidth={2} strokeDasharray="6 3" dot={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div style={cs}>
-          <div style={ts}>Distribución de spend</div>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <ResponsiveContainer width={130} height={130}>
-              <PieChart>
-                <Pie data={PLACE} dataKey="spend" nameKey="name" innerRadius={38} outerRadius={58} paddingAngle={3}>
-                  {PLACE.map((_,i)=><Cell key={i} fill={PLC[i]}/>)}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{flex:1}}>
-              {PLACE.map((p,i)=>(
-                <div key={p.name} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6,fontSize:11}}>
-                  <div style={{width:7,height:7,borderRadius:1,background:PLC[i],flexShrink:0}}/>
-                  <span style={{color:MUT2,flex:1,fontSize:10}}>{p.name.replace('Facebook','FB').replace('Instagram','IG')}</span>
-                  <span style={{fontWeight:600}}>{(p.spend/totalSpend*100).toFixed(0)}%</span>
+      {/* Grid de tarjetas de presupuesto por campaña */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+        {budgetData.map(c => (
+          <div key={c.id} style={{ background:CRD, border:'1px solid '+BRD, borderRadius:10, padding:18 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:500, lineHeight:1.3, maxWidth:160 }}>{c.name}</div>
+                <div style={{ fontSize:10, color:SEC, marginTop:2 }}>Presupuesto Diario</div>
+              </div>
+              <span style={{ padding:'3px 8px', borderRadius:4, fontSize:11, fontWeight:600, background: c.pace==='on' ? GRD : c.pace==='fast' ? AMD : 'rgba(96,165,250,0.12)', color:paceColors[c.pace], border:'1px solid '+(c.pace==='on'?'rgba(74,222,128,0.25)':c.pace==='fast'?'rgba(251,191,36,0.25)':'rgba(96,165,250,0.25)') }}>
+                {paceLabels[c.pace]}
+              </span>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+              {[
+                { label:'Presupuesto Total', value:fmtCOP(c.totalBudget) },
+                { label:'Gastado', value:fmtCOP(c.spend) },
+                { label:'Restante', value:fmtCOP(c.remaining) },
+                { label:'Proyectado', value:fmtCOP(c.projected) },
+              ].map(m=>(
+                <div key={m.label}>
+                  <div style={{ fontSize:10, color:SEC, textTransform:'uppercase', letterSpacing:'0.04em' }}>{m.label}</div>
+                  <div style={{ fontSize:15, fontWeight:600, ...MONO }}>{m.value}</div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        <div style={cs}>
-          <div style={ts}>CTR y ROAS por placement</div>
-          <ResponsiveContainer width="100%" height={168}>
-            <ComposedChart
-              data={PLACE.map(p=>({...p,name:p.name.replace('Facebook','FB').replace('Instagram','IG')}))}
-              layout="vertical"
-              margin={{top:5,right:40,bottom:5,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" horizontal={false}/>
-              <XAxis type="number" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false}/>
-              <YAxis dataKey="name" type="category" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} width={82}/>
-              <Tooltip content={<ChartTip/>}/>
-              <Bar dataKey="ctr"  name="CTR %"  fill={AC} fillOpacity={0.8} radius={[0,3,3,0]} barSize={10}/>
-              <Bar dataKey="roas" name="ROAS x" fill={GR} fillOpacity={0.7} radius={[0,3,3,0]} barSize={10}/>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ── SECCIÓN: CREATIVIDADES ──────────────────────── */
-function CreativesSection(){
-  const chartData=ADS.map(a=>({
-    name:(a.name??'').split('/')?.[2]?.trim()||(a.name??'').substring(0,18)||'Sin nombre',
-    spend:Math.round(safeNum(a.spend)/1000),
-    impressions:safeNum(a.impressions),
-    ctr:safeNum(a.ctr),
-  }))
-
-  return (
-    <div>
-      <div style={{fontSize:12,color:MUT,marginBottom:14}}>{ADS.length} creatividades · act_1043322110399302</div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,marginBottom:14}}>
-        {ADS.map((a,idx)=>(
-          <div key={a.id??idx} style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,overflow:'hidden'}}>
-            <div style={{height:88,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(141,96,202,.07)',borderBottom:`1px solid ${BOR}`,fontSize:34}}>
-              {a.emoji??'📦'}
+            {/* Barra de progreso */}
+            <div style={{ marginBottom:6, display:'flex', justifyContent:'space-between', fontSize:11, color:SEC }}>
+              <span>Progreso: {c.spentPct.toFixed(0)}%</span>
+              <span>Tiempo: {c.timePct.toFixed(0)}%</span>
             </div>
-            <div style={{padding:12}}>
-              <p style={{fontSize:11,color:'#ccc',marginBottom:8,lineHeight:1.4}}>{a.name}</p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr',gap:5}}>
-                {[
-                  {l:'Spend',v:fmtM(a.spend)},
-                  {l:'Impr.', v:fmt(a.impressions)},
-                  {l:'Clics', v:fmt(a.clicks)},
-                  {l:'CTR',   v:safeF(a.ctr)+'%',c:a.ctr>=BM.ctr?GR:'#e8e8e8'},
-                  {l:'CPM',   v:fmtM(a.cpm)},
-                ].map(m=>(
-                  <div key={m.l} style={{background:'rgba(255,255,255,.04)',borderRadius:4,padding:'5px 6px'}}>
-                    <div style={{fontSize:9,color:MUT}}>{m.l}</div>
-                    <div style={{fontSize:12,fontWeight:500,color:m.c??'#e8e8e8'}}>{m.v}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{marginTop:8}}>
-                <span style={{padding:'2px 8px',borderRadius:3,background:ACD,color:ACL,fontSize:10}}>{a.type}</span>
-              </div>
+            <div style={{ height:8, background:BRD, borderRadius:4, overflow:'hidden' }}>
+              <div style={{ width:Math.min(c.spentPct,100)+'%', height:'100%', background:paceColors[c.pace], borderRadius:4, transition:'width 0.5s' }} />
+            </div>
+            <div style={{ marginTop:6, fontSize:11, color:SEC }}>
+              Diario promedio: <span style={MONO}>{fmtCOP(Math.round(c.dailyAvg))}</span>
             </div>
           </div>
         ))}
       </div>
-      <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-        <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Comparativo creatividades</div>
-        <ResponsiveContainer width="100%" height={210}>
-          <ComposedChart data={chartData} layout="vertical" margin={{top:5,right:40,bottom:5,left:10}}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" horizontal={false}/>
-            <XAxis type="number" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false}/>
-            <YAxis dataKey="name" type="category" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} width={115}/>
-            <Tooltip content={<ChartTip/>}/>
-            <Bar dataKey="spend"       name="Spend (miles COP)" fill={AC} fillOpacity={0.75} radius={[0,4,4,0]} barSize={14}/>
-            <Bar dataKey="impressions" name="Impresiones"       fill={BL} fillOpacity={0.6}  radius={[0,4,4,0]} barSize={14}/>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
     </div>
   )
 }
 
-/* ── SECCIÓN: PRESUPUESTO ────────────────────────── */
-function BudgetSection(){
-  const cumulative=useMemo(()=>{
-    let acc=0
-    return DAILY.map(d=>{acc+=safeNum(d.spend);return{date:d.date,value:acc}})
-  },[])
-
-  const radarData=[
-    {metric:'CTR',       value:Math.round((GL.ctr/5)*100)},
-    {metric:'ROAS',      value:Math.round((GL.roas/5)*100)},
-    {metric:'Conversión',value:Math.round(GL.conv_rate*100)},
-    {metric:'Frecuencia',value:Math.round((1-(GL.frequency-1)/4)*100)},
-    {metric:'CPM efic.', value:Math.round((1-GL.cpm/20000)*100)},
-  ]
-
-  const spend=safeNum(GL.spend)
-  const dailyAvg=Math.round(spend/30)
-  const pacing=Math.min(Math.round((spend/(dailyAvg*30||1))*100),100)
-  const revenue=spend*safeNum(GL.roas)
-
-  return (
-    <div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Pacing del período</div>
-          <div style={{display:'flex',alignItems:'center',gap:20,marginBottom:18}}>
-            <div>
-              <div style={{fontSize:10,color:MUT,marginBottom:2}}>ROAS actual</div>
-              <div style={{fontSize:38,fontWeight:500,color:AC,lineHeight:1}}>
-                4.40x
-                <span style={{fontSize:12,color:GR,marginLeft:6}}>↑ {((GL.roas-PREV.roas)/PREV.roas*100).toFixed(1)}%</span>
-              </div>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:10,color:MUT,marginBottom:6}}>Spend ejecutado ({pacing}%)</div>
-              <div style={{background:'rgba(255,255,255,.06)',borderRadius:4,height:8}}>
-                <div style={{width:`${pacing}%`,height:8,borderRadius:4,background:GR}}/>
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:MUT,marginTop:4}}>
-                <span>{fmtM(spend)}</span>
-                <span>~{fmtM(dailyAvg*30)} esperado</span>
-              </div>
-            </div>
-          </div>
-          <div style={{borderTop:`1px solid ${BOR}`,paddingTop:12}}>
-            {[
-              {l:'Días del período',       v:'30 / 30',               c:'#ccc'},
-              {l:'Promedio diario',         v:fmtCOP(dailyAvg)+' COP', c:'#ccc'},
-              {l:'Spend total',             v:fmtCOP(spend)+' COP',    c:'#ccc'},
-              {l:'Revenue (ROAS × Spend)', v:fmtM(revenue)+' COP',    c:GR},
-              {l:'Margen estimado',         v:fmtM(revenue-spend)+' COP',c:GR},
-            ].map(r=>(
-              <div key={r.l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.04)',fontSize:12}}>
-                <span style={{color:MUT}}>{r.l}</span>
-                <span style={{fontWeight:500,color:r.c}}>{r.v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-          <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:6}}>Radar de eficiencia (0–100)</div>
-          <div style={{fontSize:10,color:MUT,marginBottom:10,lineHeight:1.5}}>CTR / ROAS / Conversión / Frecuencia (inv.) / CPM (inv.)</div>
-          <ResponsiveContainer width="100%" height={200}>
-            <RadarChart data={radarData} margin={{top:10,right:20,bottom:10,left:20}}>
-              <PolarGrid stroke="rgba(255,255,255,.1)"/>
-              <PolarAngleAxis dataKey="metric" tick={{fill:MUT2,fontSize:11}}/>
-              <PolarRadiusAxis angle={30} domain={[0,100]} tick={{fill:MUT,fontSize:8}} axisLine={false} tickCount={4}/>
-              <Radar name="Performance" dataKey="value" stroke={AC} fill={AC} fillOpacity={0.25} strokeWidth={2.5} dot={{fill:AC,r:4}}/>
-              <Tooltip contentStyle={{background:'#1a1a1a',border:`1px solid ${BOR2}`,fontSize:11}}/>
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div style={{background:CRD,border:`1px solid ${BOR}`,borderRadius:8,padding:16}}>
-        <div style={{fontSize:11,color:MUT,textTransform:'uppercase',letterSpacing:'.6px',marginBottom:14}}>Gasto acumulado — 30 días (COP)</div>
-        <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={cumulative} margin={{top:5,right:10,bottom:5,left:0}}>
-            <defs>
-              <linearGradient id="gcum" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={AM} stopOpacity={0.25}/>
-                <stop offset="95%" stopColor={AM} stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false}/>
-            <XAxis dataKey="date" tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} interval={4}/>
-            <YAxis tick={{fill:MUT,fontSize:9}} tickLine={false} axisLine={false} tickFormatter={fmtM} width={55}/>
-            <Tooltip content={<ChartTip formatter={fmtCOP}/>}/>
-            <Area type="monotone" dataKey="value" name="Acumulado" stroke={AM} fill="url(#gcum)" strokeWidth={2} dot={false}/>
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
-}
-
-/* ── APP PRINCIPAL ───────────────────────────────── */
-const NAV=[
-  {id:'overview',   label:'Vista General', icon:'▦'},
-  {id:'campaigns',  label:'Campañas',       icon:'◈'},
-  {id:'analytics',  label:'Analítica',      icon:'↗'},
-  {id:'audiences',  label:'Audiencias',     icon:'◎'},
-  {id:'placements', label:'Placements',     icon:'⊞'},
-  {id:'creatives',  label:'Creatividades',  icon:'▣'},
-  {id:'budget',     label:'Presupuesto',    icon:'◉'},
+/* ══════════════════════════════════════════════════════════════════════
+   COMPONENTE PRINCIPAL — APP
+══════════════════════════════════════════════════════════════════════ */
+const DATE_RANGES = [
+  { label:'Últimos 7 días',  value:'7d' },
+  { label:'Últimos 30 días', value:'30d' },
+  { label:'Últimos 90 días', value:'90d' },
+  { label:'Este mes',        value:'month' },
 ]
 
-export default function App(){
-  const [active,setActive]=useState('overview')
+const NAV_ITEMS = [
+  { id:'overview',   label:'Vista General', icon:'▦' },
+  { id:'campaigns',  label:'Campañas',      icon:'◈' },
+  { id:'analytics',  label:'Analítica',     icon:'↗' },
+  { id:'creatives',  label:'Creatividades', icon:'▣' },
+  { id:'audiences',  label:'Audiencias',    icon:'◉' },
+  { id:'budget',     label:'Presupuesto',   icon:'◎' },
+]
+
+const PAGE_TITLES = {
+  overview: 'Vista General', campaigns: 'Campañas',
+  analytics: 'Analítica', creatives: 'Creatividades',
+  audiences: 'Audiencias', budget: 'Presupuesto',
+}
+
+export default function App() {
+  const [activePage, setActivePage] = useState('overview')
+  const [dateRange, setDateRange] = useState('30d')
+
+  const renderPage = () => {
+    const props = { onNavigate: setActivePage }
+    switch (activePage) {
+      case 'overview':   return <Overview {...props} />
+      case 'campaigns':  return <Campaigns />
+      case 'analytics':  return <Analytics />
+      case 'creatives':  return <Creatives />
+      case 'audiences':  return <Audiences />
+      case 'budget':     return <Budget />
+      default:           return <Overview {...props} />
+    }
+  }
 
   return (
-    <div style={{display:'flex',height:'100vh',background:BG,overflow:'hidden'}}>
-
-      <div style={{width:188,minWidth:188,background:SRF,borderRight:`1px solid ${BOR}`,display:'flex',flexDirection:'column'}}>
-        <div style={{padding:'16px 14px 20px',display:'flex',alignItems:'center',gap:9}}>
-          <div style={{width:26,height:26,borderRadius:7,background:ACD,border:`1px solid ${AC}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:ACL,fontWeight:700}}>M</div>
-          <div>
-            <div style={{fontSize:13,fontWeight:600,color:'#e8e8e8'}}>Meta Ads</div>
-            <div style={{fontSize:10,color:MUT}}>Dashboard</div>
+    <div style={S.page}>
+      {/* Sidebar */}
+      <div style={S.sidebar}>
+        <div style={S.sidebarLogo}>
+          <div style={S.logoDot} />
+          <span style={S.logoText}>Meta Ads</span>
+        </div>
+        {NAV_ITEMS.map(item => (
+          <div key={item.id} style={S.navItem(activePage===item.id)} onClick={()=>setActivePage(item.id)}>
+            <span style={S.navIcon}>{item.icon}</span>
+            <span>{item.label}</span>
           </div>
-        </div>
-
-        <div style={{flex:1,overflowY:'auto'}}>
-          {NAV.map(s=>{
-            const on=active===s.id
-            return (
-              <div key={s.id} onClick={()=>setActive(s.id)}
-                style={{display:'flex',alignItems:'center',gap:9,padding:'9px 14px',fontSize:13,cursor:'pointer',
-                  color:on?AC:MUT2,background:on?ACD:'transparent',
-                  borderLeft:`2px solid ${on?AC:'transparent'}`,transition:'all .1s'}}
-                onMouseEnter={e=>{if(!on){e.currentTarget.style.color='#ddd';e.currentTarget.style.background='rgba(255,255,255,.04)'}}}
-                onMouseLeave={e=>{if(!on){e.currentTarget.style.color=MUT2;e.currentTarget.style.background='transparent'}}}>
-                <span style={{fontSize:13,width:15,textAlign:'center',flexShrink:0}}>{s.icon}</span>
-                {s.label}
-              </div>
-            )
-          })}
-        </div>
-
-        <div style={{padding:'12px 14px',borderTop:`1px solid ${BOR}`}}>
-          <div style={{fontSize:9,color:MUT,textTransform:'uppercase',letterSpacing:'.4px',marginBottom:3}}>Cuenta</div>
-          <div style={{fontSize:9,color:'#444',wordBreak:'break-all',lineHeight:1.4}}>act_1043322110399302</div>
-        </div>
+        ))}
+        <div style={S.sidebarFooter}>{ACCOUNT.id}</div>
       </div>
 
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-        <div style={{background:SRF,borderBottom:`1px solid ${BOR}`,padding:'0 20px',height:46,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <span style={{fontSize:14,fontWeight:500,color:'#e8e8e8'}}>{NAV.find(s=>s.id===active)?.label??''}</span>
-            <span style={{fontSize:10,color:GR,background:GRD,padding:'2px 8px',borderRadius:3}}>ROAS 4.40x ↑</span>
-            <span style={{fontSize:10,color:AM,background:AMD,padding:'2px 8px',borderRadius:3}}>CTR 3.15%</span>
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{background:ACD,border:`1px solid rgba(141,96,202,.3)`,borderRadius:4,padding:'3px 9px',fontSize:11,color:ACL}}>Tennispremium</span>
-            <span style={{background:CRD,border:`1px solid ${BOR2}`,borderRadius:5,padding:'4px 10px',fontSize:11,color:'#aaa'}}>📅 Mar 16 – Abr 14, 2026</span>
+      {/* Main */}
+      <div style={S.main}>
+        {/* Header */}
+        <div style={S.header}>
+          <div style={S.headerTitle}>{PAGE_TITLES[activePage]}</div>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={S.accountPill}>{ACCOUNT.name}</div>
+            <div style={S.datePill}>
+              <span>📅</span>
+              <select
+                value={dateRange}
+                onChange={e=>setDateRange(e.target.value)}
+                style={{ background:'transparent', border:'none', color:TXT, fontSize:13, outline:'none', cursor:'pointer' }}
+              >
+                {DATE_RANGES.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div style={{flex:1,overflowY:'auto',padding:'18px 20px'}}>
-          {active==='overview'   && <OverviewSection/>}
-          {active==='campaigns'  && <CampaignsSection/>}
-          {active==='analytics'  && <AnalyticsSection/>}
-          {active==='audiences'  && <AudiencesSection/>}
-          {active==='placements' && <PlacementsSection/>}
-          {active==='creatives'  && <CreativesSection/>}
-          {active==='budget'     && <BudgetSection/>}
+        {/* Page content */}
+        <div style={{ flex:1, overflowY:'auto' }}>
+          {renderPage()}
         </div>
       </div>
     </div>
