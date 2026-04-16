@@ -303,7 +303,7 @@ function Overview({ onNavigate }) {
       {/* Gráfico combinado Gasto + ROAS doble eje Y */}
       <div style={{ ...S.chartCard, marginBottom:24 }}>
         <div style={S.chartTitle}>Gasto Diario (COP) &amp; ROAS — Últimos 30 días · Doble eje Y</div>
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={260} debounce={50}>
           <ComposedChart data={DAILY_DATA}>
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
@@ -318,10 +318,10 @@ function Overview({ onNavigate }) {
       </div>
 
       {/* Gráfico CTR + Embudo */}
-      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:24, minWidth:0 }}>
         <div style={S.chartCard}>
           <div style={S.chartTitle}>CTR Diario (%)</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={220} debounce={50}>
             <LineChart data={DAILY_DATA}>
               <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
               <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
@@ -511,7 +511,7 @@ function Analytics() {
       {/* Gráfico 1: Gasto vs ROAS doble eje */}
       <div style={{ ...S.chartCard, marginBottom:24 }}>
         <div style={S.chartTitle}>Gasto Diario vs ROAS — Doble Eje Y</div>
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={280} debounce={50}>
           <ComposedChart data={DAILY_DATA}>
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
@@ -533,7 +533,7 @@ function Analytics() {
           <span style={{ color:AM }}>■ ROAS 2–4x (Promedio)</span>
           <span style={{ color:RE }}>■ ROAS &lt; 2x (Bajo)</span>
         </div>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={240} debounce={50}>
           <BarChart data={roasByCampaign} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis type="number" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>v+'x'} />
@@ -551,7 +551,7 @@ function Analytics() {
       {/* Gráfico 3: Impresiones y Clics en el tiempo */}
       <div style={{ ...S.chartCard, marginBottom:24 }}>
         <div style={S.chartTitle}>Impresiones &amp; Clics a lo Largo del Tiempo</div>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={240} debounce={50}>
           <LineChart data={DAILY_DATA}>
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
@@ -703,7 +703,7 @@ function Audiences() {
             <span style={{ color:AC }}>■ Masculino</span>
             <span style={{ color:BL }}>■ Femenino</span>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={240} debounce={50}>
             <BarChart data={AGE_GENDER}>
               <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
               <XAxis dataKey="age" tick={{ fill:SEC, fontSize:11 }} />
@@ -717,7 +717,7 @@ function Audiences() {
 
         <div style={S.chartCard}>
           <div style={S.chartTitle}>Desglose por Dispositivo</div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={200} debounce={50}>
             <PieChart>
               <Pie data={DEVICES} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
                 {DEVICES.map((_, i) => <Cell key={i} fill={DEVICE_COLORS_LIST[i]} />)}
@@ -742,7 +742,7 @@ function Audiences() {
       {/* Gráfico 3: Rendimiento por Placement */}
       <div style={{ ...S.chartCard, marginBottom:24 }}>
         <div style={S.chartTitle}>Rendimiento por Ubicación / Placement</div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={220} debounce={50}>
           <BarChart data={PLACEMENTS} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis type="number" tick={{ fill:SEC, fontSize:11 }} tickFormatter={v=>fmtCOP(v)} />
@@ -808,7 +808,7 @@ function Budget() {
   const activeBudgets = budgetData.filter(c=>c.status==='ACTIVE')
 
   // Datos para el gráfico de barras diarias con línea de presupuesto promedio
-  const avgDailyBudget = activeBudgets.reduce((s,c)=>s+c.daily_budget,0)
+  const avgDailyBudget = DAILY_DATA.reduce((s,d)=>s+d.spend,0) / DAILY_DATA.length * 1.15
   const chartData = DAILY_DATA.map(d => ({ ...d, budget: avgDailyBudget }))
 
   const totalProjected = budgetData.reduce((s,c)=>s+c.projected,0)
@@ -834,7 +834,7 @@ function Budget() {
       {/* Gráfico de gasto diario + línea presupuesto */}
       <div style={{ ...S.chartCard, marginBottom:24 }}>
         <div style={S.chartTitle}>Gasto Diario vs Presupuesto Promedio Diario</div>
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={260} debounce={50}>
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke={BRD} />
             <XAxis dataKey="date" tick={{ fill:SEC, fontSize:11 }} interval={4} />
